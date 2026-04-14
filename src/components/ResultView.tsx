@@ -59,19 +59,7 @@ export function ResultView() {
           )}
 
           {/* Simulate result button (for demo) */}
-          <div className="flex flex-col gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                const { setResult } = require('@/context/ExamContext');
-                // Demo: cycle through mock results
-              }}
-              className="hidden"
-            >
-              Simular resultado
-            </Button>
-          </div>
+          {/* NOTE: In production, results would be fetched from a secure backend */}
 
           <div className="flex gap-3 justify-center">
             <Button variant="outline" onClick={() => navigate({ to: '/' })}>
