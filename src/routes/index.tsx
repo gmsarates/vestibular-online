@@ -1,19 +1,23 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute } from '@tanstack/react-router';
+import { LoginForm } from '@/components/LoginForm';
+import { ExamSelector } from '@/components/ExamSelector';
+import { useExam } from '@/context/ExamContext';
 
-export const Route = createFileRoute("/")({
-  component: Index,
+export const Route = createFileRoute('/')({
+  head: () => ({
+    meta: [
+      { title: 'Vestibular Online — Plataforma de Redação' },
+      { name: 'description', content: 'Plataforma de vestibular online focada em redação. Faça login e inicie sua prova.' },
+      { property: 'og:title', content: 'Vestibular Online — Plataforma de Redação' },
+      { property: 'og:description', content: 'Plataforma de vestibular online focada em redação.' },
+    ],
+  }),
+  component: IndexPage,
 });
 
-// IMPORTANT: Replace this placeholder. For sites with multiple pages (About, Services, Contact, etc.),
-// create separate route files (about.tsx, services.tsx, contact.tsx) — don't put all pages in this file.
-function PlaceholderIndex() {
-  return (
-    <div className="flex min-h-screen items-center justify-center" style={{ backgroundColor: '#fcfbf8' }}>
-      <img data-lovable-blank-page-placeholder="REMOVE_THIS" src="/placeholder.svg" alt="Your app will live here!" />
-    </div>
-  );
-}
+function IndexPage() {
+  const { user } = useExam();
 
-function Index() {
-  return <PlaceholderIndex />;
+  if (!user) return <LoginForm />;
+  return <ExamSelector />;
 }
