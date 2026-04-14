@@ -5,6 +5,7 @@ import { useNavigate } from '@tanstack/react-router';
 
 export function ExamSelector() {
   const { exams, selectExam, examState, logout } = useExam();
+  const navigate = useNavigate();
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
