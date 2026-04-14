@@ -1,6 +1,7 @@
 import { useExam } from '@/context/ExamContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useNavigate } from '@tanstack/react-router';
 
 export function ExamSelector() {
   const { exams, selectExam, examState, logout } = useExam();
