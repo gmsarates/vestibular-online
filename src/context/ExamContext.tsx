@@ -58,8 +58,10 @@ export function ExamProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(() => {
     setUser(null);
     setExamState({ essay: '', status: 'idle', selectedExamId: null, startTimestamp: null, tabSwitchCount: 0, result: MOCK_RESULT });
-    localStorage.removeItem('user_session');
-    localStorage.removeItem('exam_state');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('user_session');
+      localStorage.removeItem('exam_state');
+    }
   }, []);
 
   const selectExam = useCallback((id: string) => {
