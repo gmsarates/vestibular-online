@@ -37,7 +37,7 @@ export function ExamSelector() {
 
         {examState.selectedExamId && (
           <div className="flex justify-center">
-            <Button size="lg" onClick={() => window.location.href = '/exam'}>
+            <Button size="lg" onClick={() => navigate({ to: '/exam' })}>
               Iniciar Prova
             </Button>
           </div>
