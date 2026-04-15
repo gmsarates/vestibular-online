@@ -30,6 +30,7 @@ interface ExamContextType {
   expireEssay: () => void;
   incrementTabSwitch: () => void;
   setResult: (result: ExamResult) => void;
+  resetExam: () => void;
   exams: ExamConfig[];
 }
 
@@ -111,10 +112,14 @@ export function ExamProvider({ children }: { children: ReactNode }) {
     setExamState(s => ({ ...s, result }));
   }, []);
 
+  const resetExam = useCallback(() => {
+    setExamState(DEFAULT_EXAM_STATE);
+  }, []);
+
   return (
     <ExamContext.Provider value={{
       user, examState, selectedExam, login, logout, selectExam, startExam,
-      updateEssay, submitEssay, expireEssay, incrementTabSwitch, setResult,
+      updateEssay, submitEssay, expireEssay, incrementTabSwitch, setResult, resetExam,
       exams: EXAM_CONFIGS,
     }}>
       {children}

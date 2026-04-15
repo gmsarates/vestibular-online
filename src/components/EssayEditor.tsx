@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/alert-dialog';
 
 export function EssayEditor() {
-  const { examState, selectedExam, updateEssay, submitEssay, startExam, incrementTabSwitch, logout, selectExam } = useExam();
+  const { examState, selectedExam, updateEssay, submitEssay, startExam, incrementTabSwitch, selectExam, resetExam } = useExam();
   const navigate = useNavigate();
   const [autoSaved, setAutoSaved] = useState(false);
   const [showTabWarning, setShowTabWarning] = useState(false);
@@ -76,11 +76,10 @@ export function EssayEditor() {
   }, [submitEssay]);
 
   const handleExitConfirmed = useCallback(() => {
-    logout();
-    selectExam('');
+    resetExam();
     setShowExitConfirm(false);
     navigate({ to: '/' });
-  }, [logout, selectExam, navigate]);
+  }, [resetExam, navigate]);
 
   const toggleFullscreen = useCallback(() => {
     if (!document.fullscreenElement) {
