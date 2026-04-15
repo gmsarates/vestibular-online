@@ -4,12 +4,18 @@ import { ExamTimer } from '@/components/ExamTimer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNavigate } from '@tanstack/react-router';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 export function EssayEditor() {
-  const { examState, selectedExam, updateEssay, submitEssay, startExam, incrementTabSwitch, logout } = useExam();
+  const { examState, selectedExam, updateEssay, submitEssay, startExam, incrementTabSwitch, logout, selectExam } = useExam();
   const navigate = useNavigate();
   const [autoSaved, setAutoSaved] = useState(false);
   const [showTabWarning, setShowTabWarning] = useState(false);
+  const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Start exam if not started
@@ -64,11 +70,17 @@ export function EssayEditor() {
     updateEssay(e.target.value);
   }, [updateEssay]);
 
-  const handleSubmit = useCallback(() => {
-    if (confirm('Tem certeza que deseja enviar sua redação? Esta ação não pode ser desfeita.')) {
-      submitEssay();
-    }
+  const handleSubmitConfirmed = useCallback(() => {
+    submitEssay();
+    setShowSubmitConfirm(false);
   }, [submitEssay]);
+
+  const handleExitConfirmed = useCallback(() => {
+    logout();
+    selectExam('');
+    setShowExitConfirm(false);
+    navigate({ to: '/' });
+  }, [logout, selectExam, navigate]);
 
   const toggleFullscreen = useCallback(() => {
     if (!document.fullscreenElement) {
@@ -132,17 +144,27 @@ export function EssayEditor() {
         {examState.status === 'submitted' && (
           <div className="rounded-lg bg-primary/10 p-4 text-center">
             <p className="text-lg font-semibold text-primary">✓ Redação enviada com sucesso!</p>
-            <Button variant="link" className="mt-2" onClick={() => navigate({ to: '/result' })}>
-              Ver resultado →
-            </Button>
+            <div className="mt-2 flex justify-center gap-3">
+              <Button variant="link" onClick={() => navigate({ to: '/result' })}>
+                Ver resultado →
+              </Button>
+              <Button variant="outline" onClick={() => navigate({ to: '/' })}>
+                Voltar para vestibulares
+              </Button>
+            </div>
           </div>
         )}
         {examState.status === 'expired' && (
           <div className="rounded-lg bg-destructive/10 p-4 text-center">
             <p className="text-lg font-semibold text-destructive">⏱ Tempo esgotado! Redação expirada.</p>
-            <Button variant="link" className="mt-2" onClick={() => navigate({ to: '/result' })}>
-              Ver resultado →
-            </Button>
+            <div className="mt-2 flex justify-center gap-3">
+              <Button variant="link" onClick={() => navigate({ to: '/result' })}>
+                Ver resultado →
+              </Button>
+              <Button variant="outline" onClick={() => navigate({ to: '/' })}>
+                Voltar para vestibulares
+              </Button>
+            </div>
           </div>
         )}
 
@@ -202,13 +224,46 @@ export function EssayEditor() {
         {/* Actions */}
         {isEditable && (
           <div className="flex justify-end gap-3">
-            <Button variant="outline" onClick={logout}>Sair</Button>
-            <Button onClick={handleSubmit} disabled={words < 10}>
+            <Button variant="outline" onClick={() => setShowExitConfirm(true)}>Sair da Prova</Button>
+            <Button onClick={() => setShowSubmitConfirm(true)} disabled={words < 10}>
               Enviar Redação
             </Button>
           </div>
         )}
       </main>
+
+      {/* Confirm submit */}
+      <AlertDialog open={showSubmitConfirm} onOpenChange={setShowSubmitConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Enviar Redação</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja enviar sua redação? Esta ação não pode ser desfeita.
+              Você escreveu {words} palavras.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleSubmitConfirmed}>Enviar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Confirm exit */}
+      <AlertDialog open={showExitConfirm} onOpenChange={setShowExitConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Sair da Prova</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja sair? Seu progresso será perdido e você voltará para a lista de vestibulares.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Continuar Prova</AlertDialogCancel>
+            <AlertDialogAction onClick={handleExitConfirmed}>Sair</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
