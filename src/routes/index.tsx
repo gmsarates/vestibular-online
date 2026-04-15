@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { LoginForm } from '@/components/LoginForm';
 import { ExamSelector } from '@/components/ExamSelector';
 import { useExam } from '@/context/ExamContext';
+import { useState, useEffect } from 'react';
 
 export const Route = createFileRoute('/')({
   head: () => ({
@@ -17,6 +18,21 @@ export const Route = createFileRoute('/')({
 
 function IndexPage() {
   const { user } = useExam();
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
+
+  // During SSR and before hydration, show a minimal loading state
+  // to avoid hydration mismatch when localStorage has a user session
+  if (!hydrated) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
 
   if (!user) return <LoginForm />;
   return <ExamSelector />;
