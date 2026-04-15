@@ -74,12 +74,12 @@ export function deobfuscate(data: string): string {
 }
 
 export function saveToStorage(key: string, value: unknown): void {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') return;
   localStorage.setItem(key, obfuscate(JSON.stringify(value)));
 }
 
 export function loadFromStorage<T>(key: string): T | null {
-  if (typeof window === 'undefined') return null;
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') return null;
   const raw = localStorage.getItem(key);
   if (!raw) return null;
   try {

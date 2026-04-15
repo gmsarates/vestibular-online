@@ -35,21 +35,37 @@ interface ExamContextType {
 
 const ExamContext = createContext<ExamContextType | null>(null);
 
+const DEFAULT_EXAM_STATE: ExamState = {
+  essay: '',
+  status: 'idle',
+  selectedExamId: null,
+  startTimestamp: null,
+  tabSwitchCount: 0,
+  result: MOCK_RESULT,
+};
+
 export function ExamProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<UserSession | null>(() => loadFromStorage('user_session'));
-  const [examState, setExamState] = useState<ExamState>(() => loadFromStorage('exam_state') ?? {
-    essay: '',
-    status: 'idle' as ExamStatus,
-    selectedExamId: null,
-    startTimestamp: null,
-    tabSwitchCount: 0,
-    result: MOCK_RESULT,
-  });
+  const [user, setUser] = useState<UserSession | null>(null);
+  const [examState, setExamState] = useState<ExamState>(DEFAULT_EXAM_STATE);
+  const [hasHydratedStorage, setHasHydratedStorage] = useState(false);
 
   const selectedExam = EXAM_CONFIGS.find(e => e.id === examState.selectedExamId) ?? null;
 
-  useEffect(() => { saveToStorage('user_session', user); }, [user]);
-  useEffect(() => { saveToStorage('exam_state', examState); }, [examState]);
+  useEffect(() => {
+    setUser(loadFromStorage<UserSession>('user_session'));
+    setExamState(loadFromStorage<ExamState>('exam_state') ?? DEFAULT_EXAM_STATE);
+    setHasHydratedStorage(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hasHydratedStorage) return;
+    saveToStorage('user_session', user);
+  }, [hasHydratedStorage, user]);
+
+  useEffect(() => {
+    if (!hasHydratedStorage) return;
+    saveToStorage('exam_state', examState);
+  }, [examState, hasHydratedStorage]);
 
   const login = useCallback((cpf: string) => {
     setUser({ cpf, loggedInAt: Date.now() });
@@ -57,7 +73,7 @@ export function ExamProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(() => {
     setUser(null);
-    setExamState({ essay: '', status: 'idle', selectedExamId: null, startTimestamp: null, tabSwitchCount: 0, result: MOCK_RESULT });
+    setExamState(DEFAULT_EXAM_STATE);
     if (typeof window !== 'undefined') {
       localStorage.removeItem('user_session');
       localStorage.removeItem('exam_state');
