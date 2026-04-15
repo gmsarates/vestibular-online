@@ -79,7 +79,7 @@ export function EssayEditor() {
     resetExam();
     setShowExitConfirm(false);
     navigate({ to: '/' });
-  }, [logout, selectExam, navigate]);
+  }, [resetExam, navigate]);
 
   const toggleFullscreen = useCallback(() => {
     if (!document.fullscreenElement) {

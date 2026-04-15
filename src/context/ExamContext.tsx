@@ -30,6 +30,7 @@ interface ExamContextType {
   expireEssay: () => void;
   incrementTabSwitch: () => void;
   setResult: (result: ExamResult) => void;
+  resetExam: () => void;
   exams: ExamConfig[];
 }
 
