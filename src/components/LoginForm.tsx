@@ -1,10 +1,13 @@
 import { useState, useCallback } from 'react';
+import toast from 'react-hot-toast';
 import { formatCPF, validateCPF } from '@/lib/cpf';
 import { useExam } from '@/context/ExamContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import { appCandidateApi, setAppToken } from '@gmsarates/vestibular-api-client';
+import { LoginRequest, ValidateOtpRequest } from '@gmsarates/vestibular-api-client/dist/app/types';
 
 export function LoginForm() {
   const { login } = useExam();
@@ -19,26 +22,42 @@ export function LoginForm() {
     setError('');
   }, []);
 
-  const sendOtp = useCallback(() => {
+  const sendOtp = useCallback(async () => {
     if (!validateCPF(cpf)) {
-      setError('CPF inválido. Verifique os dígitos.');
+      toast.error('CPF inválido. Verifique os dígitos.');
       return;
     }
-    const code = String(Math.floor(100000 + Math.random() * 900000));
-    setGeneratedOtp(code);
+
+    await appCandidateApi.login({ 
+      document: cpf
+    } as LoginRequest);
+
+    toast.success('Código de verificação enviado para o seu email.');
     setOtpSent(true);
-    setError('');
-    // In production, this would send via SMS/email
-    console.log(`[MOCK OTP] Código enviado: ${code}`);
-    alert(`Código de verificação (mock): ${code}`);
+    setError('');  
   }, [cpf]);
 
-  const handleLogin = useCallback(() => {
-    if (!otp || otp !== generatedOtp) {
-      setError('Código de verificação incorreto.');
+  const handleLogin = useCallback(async () => {
+    if (!otp) {
+      toast.error('Insira o código de verificação para continuar.');
       return;
     }
-    login(cpf.replace(/\D/g, ''));
+
+    try {
+      let logged = await appCandidateApi.validateOtp({ 
+        document: cpf,
+        code: otp
+      } as ValidateOtpRequest);
+
+      if (logged && logged.token) {
+        setAppToken(logged.token);
+        // seguir aqui
+        login(cpf.replace(/\D/g, ''));
+      }
+    } catch (error) {
+      toast.error('Código de verificação inválido. Tente novamente.');
+      return;
+    }
   }, [otp, generatedOtp, login, cpf]);
 
   return (

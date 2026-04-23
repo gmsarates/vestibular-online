@@ -1,5 +1,10 @@
 import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
 import { ExamProvider } from "@/context/ExamContext";
+import { Toaster } from "react-hot-toast";
+
+import { appSetBaseUrl } from "@gmsarates/vestibular-api-client";
+
+appSetBaseUrl(import.meta.env.VITE_API_BASE_URL || "http://localhost:3000");
 
 import appCss from "../styles.css?url";
 
@@ -65,6 +70,7 @@ function RootComponent() {
   return (
     <ExamProvider>
       <Outlet />
+      <Toaster position="top-right" />
     </ExamProvider>
   );
 }
