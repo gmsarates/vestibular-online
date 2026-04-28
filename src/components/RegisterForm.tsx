@@ -1,11 +1,13 @@
 import { useState, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { formatCPF, validateCPF } from '@/lib/cpf';
+import { useExam } from '@/context/ExamContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { appCandidateApi } from '@gmsarates/vestibular-api-client';
+import { appCandidateApi, setAppToken } from '@gmsarates/vestibular-api-client';
+import type { ValidateOtpRequest } from '@gmsarates/vestibular-api-client';
 
 interface RegisterFormProps {
   onBack: () => void;
@@ -20,11 +22,14 @@ function formatPhone(value: string): string {
 }
 
 export function RegisterForm({ onBack }: RegisterFormProps) {
+  const { login } = useExam();
   const [cpf, setCpf] = useState('');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
+  const [otpStep, setOtpStep] = useState(false);
+  const [otp, setOtp] = useState('');
 
   const handleSubmit = useCallback(async () => {
     const cpfDigits = cpf.replace(/\D/g, '');
@@ -59,8 +64,18 @@ export function RegisterForm({ onBack }: RegisterFormProps) {
       } as any);
 
       if (response) {
-        toast.success('Cadastro realizado com sucesso!');
-        // TODO: implementar fluxo pós-cadastro manualmente
+        toast.success('Cadastro realizado! Enviamos um código para seu email.');
+        // TODO: implementar fluxo pós-cadastro manualmente (ex: já receber token, etc)
+        // Por ora, dispara o envio do OTP de login para o email/CPF cadastrado
+        try {
+          await appCandidateApi.login({
+            document: cpfDigits,
+            universityId: import.meta.env.VITE_UNIVERSITY_ID,
+          } as any);
+        } catch (e: any) {
+          // se já foi enviado automaticamente pelo create, segue adiante
+        }
+        setOtpStep(true);
       }
     } catch (error: any) {
       if (error instanceof Error) {
@@ -73,69 +88,143 @@ export function RegisterForm({ onBack }: RegisterFormProps) {
     }
   }, [cpf, name, email, phone]);
 
+  const handleVerifyOtp = useCallback(async () => {
+    if (!otp) {
+      toast.error('Insira o código de verificação para continuar.');
+      return;
+    }
+    const cpfDigits = cpf.replace(/\D/g, '');
+    setLoading(true);
+    try {
+      const logged = await appCandidateApi.validateOtp({
+        document: cpfDigits,
+        code: otp,
+      } as ValidateOtpRequest);
+      if (logged && logged.token) {
+        setAppToken(logged.token);
+        login(cpfDigits);
+      }
+    } catch (error) {
+      toast.error('Código de verificação inválido. Tente novamente.');
+    } finally {
+      setLoading(false);
+    }
+  }, [otp, cpf, login]);
+
+  const handleResendOtp = useCallback(async () => {
+    const cpfDigits = cpf.replace(/\D/g, '');
+    try {
+      await appCandidateApi.login({
+        document: cpfDigits,
+        universityId: import.meta.env.VITE_UNIVERSITY_ID,
+      } as any);
+      toast.success('Novo código enviado para o seu email.');
+    } catch (error: any) {
+      toast.error(error?.message ?? 'Erro ao reenviar código.');
+    }
+  }, [cpf]);
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">Criar Cadastro</CardTitle>
-          <CardDescription>Preencha seus dados para se cadastrar</CardDescription>
+          <CardTitle className="text-2xl font-bold">
+            {otpStep ? 'Verificar Código' : 'Criar Cadastro'}
+          </CardTitle>
+          <CardDescription>
+            {otpStep
+              ? `Enviamos um código para ${email}. Insira-o abaixo.`
+              : 'Preencha seus dados para se cadastrar'}
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="reg-name">Nome completo</Label>
-            <Input
-              id="reg-name"
-              placeholder="Seu nome"
-              value={name}
-              onChange={e => setName(e.target.value)}
-              maxLength={255}
-              autoComplete="name"
-            />
-          </div>
+          {otpStep ? (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="reg-otp">Código de verificação</Label>
+                <Input
+                  id="reg-otp"
+                  placeholder="000000"
+                  value={otp}
+                  onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  maxLength={6}
+                  autoComplete="one-time-code"
+                />
+              </div>
+              <Button className="w-full" onClick={handleVerifyOtp} disabled={loading}>
+                {loading ? 'Verificando...' : 'Verificar e entrar'}
+              </Button>
+              <button
+                type="button"
+                className="w-full text-sm text-muted-foreground hover:underline"
+                onClick={handleResendOtp}
+                disabled={loading}
+              >
+                Reenviar código
+              </button>
+              <Button variant="ghost" className="w-full" onClick={onBack} disabled={loading}>
+                Voltar para login
+              </Button>
+            </>
+          ) : (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="reg-name">Nome completo</Label>
+                <Input
+                  id="reg-name"
+                  placeholder="Seu nome"
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  maxLength={255}
+                  autoComplete="name"
+                />
+              </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="reg-cpf">CPF</Label>
-            <Input
-              id="reg-cpf"
-              placeholder="000.000.000-00"
-              value={cpf}
-              onChange={e => setCpf(formatCPF(e.target.value))}
-              maxLength={14}
-              autoComplete="off"
-            />
-          </div>
+              <div className="space-y-2">
+                <Label htmlFor="reg-cpf">CPF</Label>
+                <Input
+                  id="reg-cpf"
+                  placeholder="000.000.000-00"
+                  value={cpf}
+                  onChange={e => setCpf(formatCPF(e.target.value))}
+                  maxLength={14}
+                  autoComplete="off"
+                />
+              </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="reg-email">Email</Label>
-            <Input
-              id="reg-email"
-              type="email"
-              placeholder="seu@email.com"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              maxLength={255}
-              autoComplete="email"
-            />
-          </div>
+              <div className="space-y-2">
+                <Label htmlFor="reg-email">Email</Label>
+                <Input
+                  id="reg-email"
+                  type="email"
+                  placeholder="seu@email.com"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  maxLength={255}
+                  autoComplete="email"
+                />
+              </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="reg-phone">Telefone</Label>
-            <Input
-              id="reg-phone"
-              placeholder="(00) 00000-0000"
-              value={phone}
-              onChange={e => setPhone(formatPhone(e.target.value))}
-              maxLength={16}
-              autoComplete="tel"
-            />
-          </div>
+              <div className="space-y-2">
+                <Label htmlFor="reg-phone">Telefone</Label>
+                <Input
+                  id="reg-phone"
+                  placeholder="(00) 00000-0000"
+                  value={phone}
+                  onChange={e => setPhone(formatPhone(e.target.value))}
+                  maxLength={16}
+                  autoComplete="tel"
+                />
+              </div>
 
-          <Button className="w-full" onClick={handleSubmit} disabled={loading}>
-            {loading ? 'Cadastrando...' : 'Cadastrar'}
-          </Button>
-          <Button variant="ghost" className="w-full" onClick={onBack} disabled={loading}>
-            Voltar para login
-          </Button>
+              <Button className="w-full" onClick={handleSubmit} disabled={loading}>
+                {loading ? 'Cadastrando...' : 'Cadastrar'}
+              </Button>
+              <Button variant="ghost" className="w-full" onClick={onBack} disabled={loading}>
+                Voltar para login
+              </Button>
+            </>
+          )}
         </CardContent>
       </Card>
     </div>
