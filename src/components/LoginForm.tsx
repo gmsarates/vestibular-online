@@ -33,7 +33,7 @@ export function LoginForm() {
     try {
       await appCandidateApi.login({ 
         document: cpf,
-        universityId: import.meta.env.VITE_UNIVERSITY_ID
+        university_id: import.meta.env.VITE_UNIVERSITY_ID
       } as LoginRequest);
       
       toast.success('Código de verificação enviado para o seu email.');
@@ -59,7 +59,7 @@ export function LoginForm() {
       let logged = await appCandidateApi.validateOtp({ 
         document: cpf,
         code: otp,
-        universityId: import.meta.env.VITE_UNIVERSITY_ID,
+        university_id: import.meta.env.VITE_UNIVERSITY_ID,
       } as ValidateOtpRequest);
 
       if (logged && logged.token) {

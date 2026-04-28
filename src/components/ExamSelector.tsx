@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/alert-dialog';
 
 export function ExamSelector() {
-  const { exams, selectExam, examState, logout } = useExam();
+  const { user, exams, selectExam, examState, login, logout } = useExam();
   const navigate = useNavigate();
   const [showStartConfirm, setShowStartConfirm] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -20,9 +20,10 @@ export function ExamSelector() {
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <div className="w-full max-w-2xl space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-foreground">Selecione o Vestibular</h1>
+          <h1 className="text-2xl font-bold text-foreground">Olá, {user?.name ?? 'bem vindo!'}</h1>
           <Button variant="ghost" onClick={() => setShowLogoutConfirm(true)}>Sair</Button>
         </div>
+        <p className="text-[0.8rem] text-muted-foreground text-center">Verifique abaixo os vestibulares disponíveis para seu perfil.</p>
 
         <div className="grid gap-4">
           {exams.map(exam => (

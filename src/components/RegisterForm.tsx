@@ -98,7 +98,7 @@ export function RegisterForm({ onBack }: RegisterFormProps) {
       const logged = await appCandidateApi.validateOtp({
         document: cpfDigits,
         code: otp,
-        universityId: import.meta.env.VITE_UNIVERSITY_ID,
+        university_id: import.meta.env.VITE_UNIVERSITY_ID,
       } as ValidateOtpRequest);
       if (logged && logged.token) {
         setAppToken(logged.token);
