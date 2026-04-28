@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { appCandidateApi, setAppToken } from '@gmsarates/vestibular-api-client';
-import { LoginRequest, ValidateOtpRequest } from '@gmsarates/vestibular-api-client/dist/app/types';
+import { LoginRequest, ValidateOtpRequest } from '@gmsarates/vestibular-api-client';
 
 export function LoginForm() {
   const { login } = useExam();
@@ -28,13 +28,23 @@ export function LoginForm() {
       return;
     }
 
-    await appCandidateApi.login({ 
-      document: cpf
-    } as LoginRequest);
+    try {
+      await appCandidateApi.login({ 
+        document: cpf,
+        universityId: import.meta.env.VITE_UNIVERSITY_ID
+      } as LoginRequest);
+      
+      toast.success('Código de verificação enviado para o seu email.');
+      setOtpSent(true);
+      setError('');  
+    } catch (error: any) {
+      if (error instanceof Error) {
+        toast.error(error.message)
+      } else {
+        toast.error(error.toString())
+      }
+    }
 
-    toast.success('Código de verificação enviado para o seu email.');
-    setOtpSent(true);
-    setError('');  
   }, [cpf]);
 
   const handleLogin = useCallback(async () => {
