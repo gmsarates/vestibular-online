@@ -128,8 +128,14 @@ export function RegisterForm({ onBack }: RegisterFormProps) {
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">Criar Cadastro</CardTitle>
-          <CardDescription>Preencha seus dados para se cadastrar</CardDescription>
+          <CardTitle className="text-2xl font-bold">
+            {otpStep ? 'Verificar Código' : 'Criar Cadastro'}
+          </CardTitle>
+          <CardDescription>
+            {otpStep
+              ? `Enviamos um código para ${email}. Insira-o abaixo.`
+              : 'Preencha seus dados para se cadastrar'}
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
