@@ -19,10 +19,6 @@ export function LoginForm() {
   const [error, setError] = useState('');
   const [showRegister, setShowRegister] = useState(false);
 
-  if (showRegister) {
-    return <RegisterForm onBack={() => setShowRegister(false)} />;
-  }
-
   const handleCpfChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setCpf(formatCPF(e.target.value));
     setError('');
@@ -75,6 +71,10 @@ export function LoginForm() {
       return;
     }
   }, [otp, generatedOtp, login, cpf]);
+
+  if (showRegister) {
+    return <RegisterForm onBack={() => setShowRegister(false)} />;
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
