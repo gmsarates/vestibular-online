@@ -126,6 +126,15 @@ export function LoginForm() {
             </>
           )}
 
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            onClick={() => setShowRegister(true)}
+          >
+            Criar cadastro
+          </Button>
+
           {error && (
             <p className="text-sm text-destructive text-center">{error}</p>
           )}
