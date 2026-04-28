@@ -138,61 +138,93 @@ export function RegisterForm({ onBack }: RegisterFormProps) {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="reg-name">Nome completo</Label>
-            <Input
-              id="reg-name"
-              placeholder="Seu nome"
-              value={name}
-              onChange={e => setName(e.target.value)}
-              maxLength={255}
-              autoComplete="name"
-            />
-          </div>
+          {otpStep ? (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="reg-otp">Código de verificação</Label>
+                <Input
+                  id="reg-otp"
+                  placeholder="000000"
+                  value={otp}
+                  onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  maxLength={6}
+                  autoComplete="one-time-code"
+                />
+              </div>
+              <Button className="w-full" onClick={handleVerifyOtp} disabled={loading}>
+                {loading ? 'Verificando...' : 'Verificar e entrar'}
+              </Button>
+              <button
+                type="button"
+                className="w-full text-sm text-muted-foreground hover:underline"
+                onClick={handleResendOtp}
+                disabled={loading}
+              >
+                Reenviar código
+              </button>
+              <Button variant="ghost" className="w-full" onClick={onBack} disabled={loading}>
+                Voltar para login
+              </Button>
+            </>
+          ) : (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="reg-name">Nome completo</Label>
+                <Input
+                  id="reg-name"
+                  placeholder="Seu nome"
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  maxLength={255}
+                  autoComplete="name"
+                />
+              </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="reg-cpf">CPF</Label>
-            <Input
-              id="reg-cpf"
-              placeholder="000.000.000-00"
-              value={cpf}
-              onChange={e => setCpf(formatCPF(e.target.value))}
-              maxLength={14}
-              autoComplete="off"
-            />
-          </div>
+              <div className="space-y-2">
+                <Label htmlFor="reg-cpf">CPF</Label>
+                <Input
+                  id="reg-cpf"
+                  placeholder="000.000.000-00"
+                  value={cpf}
+                  onChange={e => setCpf(formatCPF(e.target.value))}
+                  maxLength={14}
+                  autoComplete="off"
+                />
+              </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="reg-email">Email</Label>
-            <Input
-              id="reg-email"
-              type="email"
-              placeholder="seu@email.com"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              maxLength={255}
-              autoComplete="email"
-            />
-          </div>
+              <div className="space-y-2">
+                <Label htmlFor="reg-email">Email</Label>
+                <Input
+                  id="reg-email"
+                  type="email"
+                  placeholder="seu@email.com"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  maxLength={255}
+                  autoComplete="email"
+                />
+              </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="reg-phone">Telefone</Label>
-            <Input
-              id="reg-phone"
-              placeholder="(00) 00000-0000"
-              value={phone}
-              onChange={e => setPhone(formatPhone(e.target.value))}
-              maxLength={16}
-              autoComplete="tel"
-            />
-          </div>
+              <div className="space-y-2">
+                <Label htmlFor="reg-phone">Telefone</Label>
+                <Input
+                  id="reg-phone"
+                  placeholder="(00) 00000-0000"
+                  value={phone}
+                  onChange={e => setPhone(formatPhone(e.target.value))}
+                  maxLength={16}
+                  autoComplete="tel"
+                />
+              </div>
 
-          <Button className="w-full" onClick={handleSubmit} disabled={loading}>
-            {loading ? 'Cadastrando...' : 'Cadastrar'}
-          </Button>
-          <Button variant="ghost" className="w-full" onClick={onBack} disabled={loading}>
-            Voltar para login
-          </Button>
+              <Button className="w-full" onClick={handleSubmit} disabled={loading}>
+                {loading ? 'Cadastrando...' : 'Cadastrar'}
+              </Button>
+              <Button variant="ghost" className="w-full" onClick={onBack} disabled={loading}>
+                Voltar para login
+              </Button>
+            </>
+          )}
         </CardContent>
       </Card>
     </div>
