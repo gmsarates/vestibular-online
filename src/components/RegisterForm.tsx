@@ -22,11 +22,14 @@ function formatPhone(value: string): string {
 }
 
 export function RegisterForm({ onBack }: RegisterFormProps) {
+  const { login } = useExam();
   const [cpf, setCpf] = useState('');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
+  const [otpStep, setOtpStep] = useState(false);
+  const [otp, setOtp] = useState('');
 
   const handleSubmit = useCallback(async () => {
     const cpfDigits = cpf.replace(/\D/g, '');
