@@ -64,8 +64,18 @@ export function RegisterForm({ onBack }: RegisterFormProps) {
       } as any);
 
       if (response) {
-        toast.success('Cadastro realizado com sucesso!');
-        // TODO: implementar fluxo pós-cadastro manualmente
+        toast.success('Cadastro realizado! Enviamos um código para seu email.');
+        // TODO: implementar fluxo pós-cadastro manualmente (ex: já receber token, etc)
+        // Por ora, dispara o envio do OTP de login para o email/CPF cadastrado
+        try {
+          await appCandidateApi.login({
+            document: cpfDigits,
+            universityId: import.meta.env.VITE_UNIVERSITY_ID,
+          } as any);
+        } catch (e: any) {
+          // se já foi enviado automaticamente pelo create, segue adiante
+        }
+        setOtpStep(true);
       }
     } catch (error: any) {
       if (error instanceof Error) {
