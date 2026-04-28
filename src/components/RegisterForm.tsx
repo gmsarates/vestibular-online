@@ -88,6 +88,42 @@ export function RegisterForm({ onBack }: RegisterFormProps) {
     }
   }, [cpf, name, email, phone]);
 
+  const handleVerifyOtp = useCallback(async () => {
+    if (!otp) {
+      toast.error('Insira o código de verificação para continuar.');
+      return;
+    }
+    const cpfDigits = cpf.replace(/\D/g, '');
+    setLoading(true);
+    try {
+      const logged = await appCandidateApi.validateOtp({
+        document: cpfDigits,
+        code: otp,
+      } as ValidateOtpRequest);
+      if (logged && logged.token) {
+        setAppToken(logged.token);
+        login(cpfDigits);
+      }
+    } catch (error) {
+      toast.error('Código de verificação inválido. Tente novamente.');
+    } finally {
+      setLoading(false);
+    }
+  }, [otp, cpf, login]);
+
+  const handleResendOtp = useCallback(async () => {
+    const cpfDigits = cpf.replace(/\D/g, '');
+    try {
+      await appCandidateApi.login({
+        document: cpfDigits,
+        universityId: import.meta.env.VITE_UNIVERSITY_ID,
+      } as any);
+      toast.success('Novo código enviado para o seu email.');
+    } catch (error: any) {
+      toast.error(error?.message ?? 'Erro ao reenviar código.');
+    }
+  }, [cpf]);
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
