@@ -65,8 +65,7 @@ export function RegisterForm({ onBack }: RegisterFormProps) {
 
       if (response) {
         toast.success('Cadastro realizado! Enviamos um código para seu email.');
-        // TODO: implementar fluxo pós-cadastro manualmente (ex: já receber token, etc)
-        // Por ora, dispara o envio do OTP de login para o email/CPF cadastrado
+        
         try {
           await appCandidateApi.login({
             document: cpfDigits,
@@ -99,6 +98,7 @@ export function RegisterForm({ onBack }: RegisterFormProps) {
       const logged = await appCandidateApi.validateOtp({
         document: cpfDigits,
         code: otp,
+        universityId: import.meta.env.VITE_UNIVERSITY_ID,
       } as ValidateOtpRequest);
       if (logged && logged.token) {
         setAppToken(logged.token);

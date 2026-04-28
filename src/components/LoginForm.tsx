@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { appCandidateApi, setAppToken } from '@gmsarates/vestibular-api-client';
+import { appCandidateApi, setAppToken, setAppTokenExpires } from '@gmsarates/vestibular-api-client';
 import { LoginRequest, ValidateOtpRequest } from '@gmsarates/vestibular-api-client';
 import { RegisterForm } from './RegisterForm';
 
@@ -58,12 +58,13 @@ export function LoginForm() {
     try {
       let logged = await appCandidateApi.validateOtp({ 
         document: cpf,
-        code: otp
+        code: otp,
+        universityId: import.meta.env.VITE_UNIVERSITY_ID,
       } as ValidateOtpRequest);
 
       if (logged && logged.token) {
+        setAppTokenExpires(logged.expires)
         setAppToken(logged.token);
-        // seguir aqui
         login(cpf.replace(/\D/g, ''));
       }
     } catch (error) {

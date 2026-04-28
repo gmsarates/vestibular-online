@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
 import { type ExamConfig, type ExamResult, EXAM_CONFIGS, MOCK_RESULT, saveToStorage, loadFromStorage } from '@/lib/mock-data';
+import { clearAppToken } from '@gmsarates/vestibular-api-client';
 
 export type ExamStatus = 'idle' | 'in_progress' | 'submitted' | 'expired';
 
@@ -73,6 +74,7 @@ export function ExamProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(() => {
+    clearAppToken();
     setUser(null);
     setExamState(DEFAULT_EXAM_STATE);
     if (typeof window !== 'undefined') {
