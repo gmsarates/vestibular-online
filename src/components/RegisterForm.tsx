@@ -1,11 +1,13 @@
 import { useState, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { formatCPF, validateCPF } from '@/lib/cpf';
+import { useExam } from '@/context/ExamContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { appCandidateApi } from '@gmsarates/vestibular-api-client';
+import { appCandidateApi, setAppToken } from '@gmsarates/vestibular-api-client';
+import type { ValidateOtpRequest } from '@gmsarates/vestibular-api-client';
 
 interface RegisterFormProps {
   onBack: () => void;
