@@ -1,6 +1,6 @@
-import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from 'react';
 import { type ExamConfig, type ExamResult, MOCK_RESULT, saveToStorage, loadFromStorage } from '@/lib/mock-data';
-import { appCandidateApi, appExamApi, clearAppToken, type Exam } from '@gmsarates/vestibular-api-client';
+import { appCandidateApi, appExamApi, clearAppToken, httpClient, type Exam } from '@gmsarates/vestibular-api-client';
 
 export type ExamStatus = 'idle' | 'in_progress' | 'submitted' | 'expired';
 
@@ -28,8 +28,9 @@ interface ExamContextType {
   login: (cpf: string) => void;
   logout: () => void;
   selectExam: (id: string) => void;
-  startExam: () => void;
+  startExam: () => Promise<void>;
   updateEssay: (text: string) => void;
+  syncEssay: () => Promise<void>;
   submitEssay: () => void;
   expireEssay: () => void;
   incrementTabSwitch: () => void;
@@ -49,6 +50,18 @@ const DEFAULT_EXAM_STATE: ExamState = {
   result: MOCK_RESULT,
 };
 
+const formatDuration = (duration: number) => {
+  const hours = parseInt(duration / 60)
+  const minutes = duration % 60
+
+  let ret = `${(hours < 10 ? '0' : '') + hours} hora${hours > 1 ? 's' : ''}`
+  if (minutes > 0) {
+    ret += ` e ${(minutes < 10 ? '0' : '') + minutes} minuto${minutes > 1 ? 's' : ''}`
+  }
+
+  return ret
+}
+
 function toInstructions(description: string | null | undefined): string[] {
   if (!description) return [];
   return description
@@ -63,7 +76,8 @@ function toExamConfig(apiExam: Exam & { university?: { name?: string } }): ExamC
     name: apiExam.name,
     institution: apiExam.university?.name ?? '—',
     theme: apiExam.theme,
-    instructions: toInstructions(apiExam.description),
+    instructions: apiExam.description,
+    duration: formatDuration(apiExam.duration),
     durationMinutes: apiExam.duration,
     minWords: apiExam.min_words,
     maxWords: apiExam.max_words,
@@ -75,8 +89,30 @@ export function ExamProvider({ children }: { children: ReactNode }) {
   const [examState, setExamState] = useState<ExamState>(DEFAULT_EXAM_STATE);
   const [hasHydratedStorage, setHasHydratedStorage] = useState(false);
   const [exams, setExams] = useState<ExamConfig[]>([]);
+  const examStateRef = useRef(examState);
 
   const selectedExam = exams.find(e => e.id === examState.selectedExamId) ?? null;
+
+  useEffect(() => {
+    examStateRef.current = examState;
+  }, [examState]);
+
+  const handleExpiredSession = useCallback((error: unknown): boolean => {
+    if (error instanceof Error && error.message === 'Sessão expirada') {
+      clearAppToken();
+      setUser(null);
+      setExamState(DEFAULT_EXAM_STATE);
+      setExams([]);
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('user_session');
+        localStorage.removeItem('exam_state');
+      }
+
+      return true;
+    }
+
+    return false
+  }, []);
 
   useEffect(() => {
     setUser(loadFromStorage<UserSession>('user_session'));
@@ -112,17 +148,7 @@ export function ExamProvider({ children }: { children: ReactNode }) {
         });
       } catch (error) {
         if (cancelled) return;
-        if (error instanceof Error && error.message === 'Sessão expirada') {
-          clearAppToken();
-          setUser(null);
-          setExamState(DEFAULT_EXAM_STATE);
-          setExams([]);
-          if (typeof window !== 'undefined') {
-            localStorage.removeItem('user_session');
-            localStorage.removeItem('exam_state');
-          }
-          return;
-        }
+        if (handleExpiredSession(error)) return;
         console.error('[ExamContext] Falha ao carregar exames:', error);
         setExams([]);
       }
@@ -169,9 +195,49 @@ export function ExamProvider({ children }: { children: ReactNode }) {
     setExamState(s => ({ ...s, selectedExamId: id }));
   }, []);
 
-  const startExam = useCallback(() => {
-    setExamState(s => ({ ...s, status: 'in_progress', startTimestamp: Date.now() }));
+  const startExam = useCallback(async () => {
+    try {
+      const examId = examState.selectedExamId;
+      if (!examId) {
+        throw new Error('Selecione um vestibular para iniciar a tentativa.');
+      }
+
+      await appExamApi.start(examId);
+
+      setExamState(s => ({ ...s, status: 'in_progress', startTimestamp: Date.now() }));
+    } catch (error) {
+      if (handleExpiredSession(error)) return;
+      throw error;
+    }
+  }, [examState.selectedExamId]);
+
+  const calculateTimeTaken = useCallback(() => {
+    const state = examStateRef.current;
+    if (!state.startTimestamp) return 0;
+    return Date.now() - state.startTimestamp;
   }, []);
+
+  const syncEssay = useCallback(async () => {
+    try {
+      const state = examStateRef.current;
+      const examId = state.selectedExamId;
+      if (!examId) {
+        throw new Error('Selecione um vestibular para atualizar.');
+      }
+
+      const words = state.essay.trim() ? state.essay.trim().split(/\s+/).length : 0;
+
+      await appExamApi.update(examId, {
+        text: state.essay,
+        words_count: words,
+        time_taken: calculateTimeTaken(),
+        tabs_count: state.tabSwitchCount
+      });
+    } catch (error) {
+      if (handleExpiredSession(error)) return;
+      throw error;
+    }
+  }, [calculateTimeTaken, handleExpiredSession]);
 
   const updateEssay = useCallback((text: string) => {
     setExamState(s => s.status === 'in_progress' ? { ...s, essay: text } : s);
@@ -203,7 +269,7 @@ export function ExamProvider({ children }: { children: ReactNode }) {
   return (
     <ExamContext.Provider value={{
       user, examState, selectedExam, login, logout, selectExam, startExam,
-      updateEssay, submitEssay, expireEssay, incrementTabSwitch, setResult, resetExam,
+      updateEssay, syncEssay, submitEssay, expireEssay, incrementTabSwitch, setResult, resetExam,
       exams,
     }}>
       {children}

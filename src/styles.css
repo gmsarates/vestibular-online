@@ -141,3 +141,14 @@
     color: var(--color-foreground);
   }
 }
+
+.exam-description {
+  font-size: 13px;
+  color: var(--muted-foreground);
+
+  ul {
+    list-style: unset;
+    padding-left: 18px;
+    margin-bottom: 15px;
+  }
+}

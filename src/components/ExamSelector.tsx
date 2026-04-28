@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useExam } from '@/context/ExamContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,14 +7,37 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import toast from 'react-hot-toast';
 
 export function ExamSelector() {
-  const { user, exams, selectExam, examState, login, logout } = useExam();
+  const { user, exams, selectExam, examState, login, logout, startExam, resetExam } = useExam();
   const navigate = useNavigate();
   const [showStartConfirm, setShowStartConfirm] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const startRequestedRef = useRef(false);
+  
 
   const selectedExam = exams.find(e => e.id === examState.selectedExamId);
+
+  const handleStart = async () => {
+    if (!selectedExam) {
+      toast.error('Selecione um vestibular para iniciar.');
+      return;
+    }
+    if (startRequestedRef.current) return;
+    startRequestedRef.current = true;
+
+    try {
+      await startExam();
+      setShowStartConfirm(false);
+      navigate({ to: '/exam' });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Falha ao iniciar a tentativa.';
+      toast.error(message);
+      resetExam();
+      startRequestedRef.current = false;
+    }
+  };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
@@ -34,11 +57,14 @@ export function ExamSelector() {
             >
               <CardHeader>
                 <CardTitle>{exam.name}</CardTitle>
-                <CardDescription>{exam.institution}</CardDescription>
+                {/* <CardDescription>{exam.institution}</CardDescription> */}
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  Duração: {exam.durationMinutes} minutos · {exam.minWords}–{exam.maxWords} palavras
+                  <strong>Duração:</strong> {exam.duration}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  <strong>Conteúdo:</strong> de {exam.minWords} a {exam.maxWords} palavras
                 </p>
               </CardContent>
             </Card>
@@ -60,14 +86,14 @@ export function ExamSelector() {
           <AlertDialogHeader>
             <AlertDialogTitle>Iniciar Prova</AlertDialogTitle>
             <AlertDialogDescription>
-              Você está prestes a iniciar a prova "{selectedExam?.name}".
-              O cronômetro de {selectedExam?.durationMinutes} minutos começará imediatamente.
-              Tem certeza que deseja continuar?
+              Você está prestes a iniciar a prova <strong>"{selectedExam?.name}"</strong>.
+              O cronômetro de {selectedExam?.duration} começará imediatamente.
+              Tem certeza que deseja continuar? <strong>Você pode realizar esta prova apenas uma vez</strong>.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={() => navigate({ to: '/exam' })}>
+            <AlertDialogAction onClick={handleStart}>
               Iniciar
             </AlertDialogAction>
           </AlertDialogFooter>

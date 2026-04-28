@@ -4,36 +4,32 @@ import { ExamTimer } from '@/components/ExamTimer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNavigate } from '@tanstack/react-router';
+import { sanitizeExamInstructionHtml } from '@/lib/html';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import toast from 'react-hot-toast';
 
 export function EssayEditor() {
-  const { examState, selectedExam, updateEssay, submitEssay, startExam, incrementTabSwitch, selectExam, resetExam } = useExam();
+  const { examState, selectedExam, updateEssay, syncEssay, submitEssay, incrementTabSwitch, resetExam } = useExam();
   const navigate = useNavigate();
   const [autoSaved, setAutoSaved] = useState(false);
   const [showTabWarning, setShowTabWarning] = useState(false);
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  // Start exam if not started
-  useEffect(() => {
-    if (examState.status === 'idle' && selectedExam) {
-      startExam();
-    }
-  }, [examState.status, selectedExam, startExam]);
+  const updateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Auto-save indicator
-  useEffect(() => {
-    if (examState.status !== 'in_progress') return;
-    const timer = setTimeout(() => {
-      setAutoSaved(true);
-      setTimeout(() => setAutoSaved(false), 2000);
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, [examState.essay, examState.status]);
+  // useEffect(() => {
+  //   if (examState.status !== 'in_progress') return;
+  //   const timer = setTimeout(() => {
+  //     setAutoSaved(true);
+  //     setTimeout(() => setAutoSaved(false), 2000);
+  //   }, 1000);
+  //   return () => clearTimeout(timer);
+  // }, [examState.essay, examState.status]);
 
   // Page Visibility API — detect tab switching
   useEffect(() => {
@@ -44,12 +40,13 @@ export function EssayEditor() {
         incrementTabSwitch();
         setShowTabWarning(true);
         setTimeout(() => setShowTabWarning(false), 5000);
+        syncEssay()
       }
     };
 
     document.addEventListener('visibilitychange', handleVisibility);
     return () => document.removeEventListener('visibilitychange', handleVisibility);
-  }, [examState.status, incrementTabSwitch]);
+  }, [examState.status, incrementTabSwitch, syncEssay]);
 
   // Warn before leaving
   useEffect(() => {
@@ -67,8 +64,29 @@ export function EssayEditor() {
   }, []);
 
   const handleTextChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    if (updateTimeoutRef.current !== null) {
+      clearTimeout(updateTimeoutRef.current);
+    }
+
+    updateTimeoutRef.current = setTimeout(() => {
+      syncEssay()
+        .then( () => {
+          setAutoSaved(true);
+          setTimeout(() => setAutoSaved(false), 2000);
+        })
+        .catch((error) => console.error('[EssayEditor] Falha ao sincronizar redação:', error));
+    }, 5000);
+
     updateEssay(e.target.value);
-  }, [updateEssay]);
+  }, [updateEssay, syncEssay]);
+
+  useEffect(() => {
+    return () => {
+      if (updateTimeoutRef.current !== null) {
+        clearTimeout(updateTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleSubmitConfirmed = useCallback(() => {
     submitEssay();
@@ -170,16 +188,17 @@ export function EssayEditor() {
         {/* Theme card */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base text-muted-foreground">Tema da Redação</CardTitle>
+            <CardTitle className="text-base text-muted-foreground">Tema da redação</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <p className="text-xl font-semibold text-foreground">{selectedExam.theme}</p>
             {selectedExam.instructions.length > 0 && (
-              <ul className="space-y-1 text-sm text-muted-foreground list-disc pl-5">
-                {selectedExam.instructions.map((inst, i) => (
-                  <li key={i}>{inst}</li>
-                ))}
-              </ul>
+              <div className="exam-description" dangerouslySetInnerHTML={{ __html: sanitizeExamInstructionHtml(selectedExam.instructions) }}></div>
+              // <ul className="space-y-1 text-sm text-muted-foreground list-disc pl-5">
+              //   {selectedExam.instructions.map((inst, i) => (
+              //     <li key={i} dangerouslySetInnerHTML={{ __html: sanitizeExamInstructionHtml(inst) }} />
+              //   ))}
+              // </ul>
             )}
           </CardContent>
         </Card>
@@ -203,6 +222,7 @@ export function EssayEditor() {
             <div className="flex gap-4">
               <span>{chars} caracteres</span>
               <span>{words} palavras</span>
+              <span>{examState.tabSwitchCount} trocas de abas</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="h-2 w-32 rounded-full bg-secondary overflow-hidden">
