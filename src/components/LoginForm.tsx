@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label';
 import { appCandidateApi, setAppToken } from '@gmsarates/vestibular-api-client';
 import { LoginRequest, ValidateOtpRequest } from '@gmsarates/vestibular-api-client';
+import { RegisterForm } from './RegisterForm';
 
 export function LoginForm() {
   const { login } = useExam();
@@ -16,6 +17,11 @@ export function LoginForm() {
   const [generatedOtp, setGeneratedOtp] = useState<string | null>(null);
   const [otpSent, setOtpSent] = useState(false);
   const [error, setError] = useState('');
+  const [showRegister, setShowRegister] = useState(false);
+
+  if (showRegister) {
+    return <RegisterForm onBack={() => setShowRegister(false)} />;
+  }
 
   const handleCpfChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setCpf(formatCPF(e.target.value));
