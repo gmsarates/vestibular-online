@@ -8,6 +8,7 @@ export interface ExamConfig {
   durationMinutes: number;
   minWords: number;
   maxWords: number;
+  attempt?: object;
 }
 
 export interface ExamResult {

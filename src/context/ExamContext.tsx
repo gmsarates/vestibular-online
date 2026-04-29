@@ -55,10 +55,10 @@ const DEFAULT_EXAM_STATE: ExamState = {
 };
 
 export const formatDuration = (duration: number) => {
-  const hours = parseInt(duration / 60)
+  const hours = Math.floor(duration / 60)
   const minutes = duration % 60
 
-  let ret = [];
+  let ret = []
   
   if (hours > 0) {
     ret.push(`${(hours < 10 ? '0' : '') + hours} hora${hours > 1 ? 's' : ''}`)
@@ -112,6 +112,7 @@ function toExamConfig(apiExam: Exam & { university?: { name?: string } }): ExamC
     durationMinutes: apiExam.duration,
     minWords: apiExam.min_words,
     maxWords: apiExam.max_words,
+    attempt: apiExam.attempt
   };
 }
 
@@ -294,8 +295,8 @@ export function ExamProvider({ children }: { children: ReactNode }) {
 
       const words = state.essay.trim() ? state.essay.trim().split(/\s+/).length : 0;
 
-      await httpClient.put(`candidate/exam/${examId}`, {
-        attempt_id: state.attemptId,
+      await appExamApi.update(examId, {
+        attempt_id: state.attemptId ?? '',
         session_id: sessionId,
         text: state.essay,
         words_count: words,
@@ -312,10 +313,30 @@ export function ExamProvider({ children }: { children: ReactNode }) {
     setExamState(s => s.status === 'in_progress' ? { ...s, essay: text } : s);
   }, []);
 
-  const submitEssay = useCallback(() => {
-    setExamState(s => ({ ...s, status: 'submitted' }));
-    // NOTE: In production, this would POST to a secure backend
-    console.log('[MOCK WEBHOOK] Essay submitted:', { timestamp: Date.now() });
+  const submitEssay = useCallback(async () => {
+    try {
+      const state = examStateRef.current;
+      const examId = state.selectedExamId;
+      if (!examId) {
+        throw new Error('Selecione um vestibular para atualizar.');
+      }
+
+      const sessionId = getOrCreateExamSessionId();
+      if (!sessionId) {
+        throw new Error('Sessão da prova inválida.');
+      }
+
+      await appExamApi.submit(examId, {
+        attempt_id: state.attemptId ?? '',
+        session_id: sessionId,
+      });
+
+      setExamState(s => ({ ...s, status: 'submitted' }));
+      
+    } catch (error) {
+      if (handleExpiredSession(error)) return;
+      throw error;
+    }
   }, []);
 
   const expireEssay = useCallback(() => {

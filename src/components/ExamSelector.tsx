@@ -8,6 +8,8 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import toast from 'react-hot-toast';
+import { Exam } from '@gmsarates/vestibular-api-client';
+import { ExamConfig } from '@/lib/mock-data';
 
 export function ExamSelector() {
   const { user, exams, selectExam, examState, currentExamState, login, logout, startExam, resetExam } = useExam();
@@ -20,6 +22,13 @@ export function ExamSelector() {
   
   const selectedExam = exams.find(e => e.id === examState.selectedExamId);
   const currentStartedExam = exams.find(e => e.id === currentExamState?.selectedExamId);
+
+  function calculateTimeLeft(startedDate: any, durationMinutes: any) {
+    const date = new Date(startedDate ?? '')
+    const now = new Date()
+    const elapsedTime = Math.floor((now - date) / (1000 * 60))
+    setTimeLeft((durationMinutes ?? 0) - elapsedTime)
+  }
 
   const handleStart = async () => {
     if (!selectedExam) {
@@ -34,14 +43,10 @@ export function ExamSelector() {
       setShowStartConfirm(false);
       navigate({ to: '/exam' });
     } catch (error) {
-      console.log(currentExamState, currentStartedExam)
       const message = error instanceof Error ? error.message : 'Falha ao iniciar a tentativa.';
       if (message === 'Multiple attempts' && currentStartedExam !== null) {
-        const startedDate = new Date(currentExamState?.startTimestamp ?? '')
-        const now = new Date()
-        const elapsedTime = Math.floor((now - startedDate) / (1000 * 60))
-        
-        setTimeLeft((currentStartedExam?.durationMinutes ?? 0) - elapsedTime)
+        // aqui se eu clicar logo depois do login, nao ta pegando a prova que ta em andamento
+        calculateTimeLeft(currentExamState?.startTimestamp, currentStartedExam?.durationMinutes)
         setShowMultipleAttempts(true)
       } else {
         toast.error(message);
@@ -50,6 +55,12 @@ export function ExamSelector() {
       startRequestedRef.current = false;
     }
   };
+
+  const handleDisabledClick = (exam: ExamConfig) => {
+    console.log(exam.attempt)
+    calculateTimeLeft(exam?.attempt?.created_at_timestamp, exam.durationMinutes)
+    setShowMultipleAttempts(true)
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
@@ -61,15 +72,17 @@ export function ExamSelector() {
         <p className="text-[0.8rem] text-muted-foreground text-center">Verifique abaixo os vestibulares disponíveis para seu perfil.</p>
 
         <div className="grid gap-4">
-          {exams.map(exam => (
+          {exams.map(exam => {
+            const disabled = exam.attempt !== null
+            return (
             <Card
               key={exam.id}
-              className={`cursor-pointer transition-shadow hover:shadow-lg ${examState.selectedExamId === exam.id ? 'ring-2 ring-primary' : ''}`}
-              onClick={() => selectExam(exam.id)}
+              className={`${disabled ? '' : 'cursor-pointer transition-shadow hover:shadow-lg' }  ${examState.selectedExamId === exam.id ? 'ring-2 ring-primary' : ''}`}
+              onClick={() => disabled ? handleDisabledClick(exam) : selectExam(exam.id) }
             >
               <CardHeader>
                 <CardTitle>{exam.name}</CardTitle>
-                {/* <CardDescription>{exam.institution}</CardDescription> */}
+                {/* <CardDescription></CardDescription> */}
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
@@ -80,7 +93,8 @@ export function ExamSelector() {
                 </p>
               </CardContent>
             </Card>
-          ))}
+          )
+          })}
         </div>
 
         {examState.selectedExamId && (
