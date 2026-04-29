@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from 'react';
 import { type ExamConfig, type ExamResult, MOCK_RESULT, saveToStorage, loadFromStorage } from '@/lib/mock-data';
 import { appCandidateApi, appExamApi, clearAppToken, httpClient, type Exam } from '@gmsarates/vestibular-api-client';
+import { armAttemptAccess, getOrCreateExamSessionId } from '@/lib/exam-session';
 
 export type ExamStatus = 'idle' | 'in_progress' | 'submitted' | 'expired';
 
@@ -17,6 +18,7 @@ interface ExamState {
   status: ExamStatus;
   selectedExamId: string | null;
   startTimestamp: number | null;
+  attemptId: string | null;
   tabSwitchCount: number;
   result: ExamResult | null;
 }
@@ -24,6 +26,7 @@ interface ExamState {
 interface ExamContextType {
   user: UserSession | null;
   examState: ExamState;
+  currentExamState: ExamState | null;
   selectedExam: ExamConfig | null;
   login: (cpf: string) => void;
   logout: () => void;
@@ -46,20 +49,48 @@ const DEFAULT_EXAM_STATE: ExamState = {
   status: 'idle',
   selectedExamId: null,
   startTimestamp: null,
+  attemptId: null,
   tabSwitchCount: 0,
   result: MOCK_RESULT,
 };
 
-const formatDuration = (duration: number) => {
+export const formatDuration = (duration: number) => {
   const hours = parseInt(duration / 60)
   const minutes = duration % 60
 
-  let ret = `${(hours < 10 ? '0' : '') + hours} hora${hours > 1 ? 's' : ''}`
-  if (minutes > 0) {
-    ret += ` e ${(minutes < 10 ? '0' : '') + minutes} minuto${minutes > 1 ? 's' : ''}`
+  let ret = [];
+  
+  if (hours > 0) {
+    ret.push(`${(hours < 10 ? '0' : '') + hours} hora${hours > 1 ? 's' : ''}`)
   }
 
-  return ret
+  if (minutes > 0) {
+    ret.push(`${(minutes < 10 ? '0' : '') + minutes} minuto${minutes > 1 ? 's' : ''}`)
+  }
+
+  return ret.join(' e ')
+}
+
+function isUuid(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-7][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
+
+function extractAttemptUuid(payload: unknown): string | null {
+  if (typeof payload === 'string') return isUuid(payload) ? payload : null;
+  if (!payload || typeof payload !== 'object') return null;
+
+  const obj = payload as Record<string, unknown>;
+
+  if (typeof obj.uuid === 'string' && isUuid(obj.uuid)) return obj.uuid;
+  if (typeof obj.id === 'string' && isUuid(obj.id)) return obj.id;
+
+  if (obj.data && typeof obj.data === 'object') {
+    const data = obj.data as Record<string, unknown>;
+    if (typeof data.uuid === 'string' && isUuid(data.uuid)) return data.uuid;
+    if (typeof data.id === 'string' && isUuid(data.id)) return data.id;
+  }
+
+  return null;
 }
 
 function toInstructions(description: string | null | undefined): string[] {
@@ -87,6 +118,7 @@ function toExamConfig(apiExam: Exam & { university?: { name?: string } }): ExamC
 export function ExamProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserSession | null>(null);
   const [examState, setExamState] = useState<ExamState>(DEFAULT_EXAM_STATE);
+  const [currentExamState, setCurrentExamState] = useState<ExamState|null>(null);
   const [hasHydratedStorage, setHasHydratedStorage] = useState(false);
   const [exams, setExams] = useState<ExamConfig[]>([]);
   const examStateRef = useRef(examState);
@@ -102,6 +134,7 @@ export function ExamProvider({ children }: { children: ReactNode }) {
       clearAppToken();
       setUser(null);
       setExamState(DEFAULT_EXAM_STATE);
+      setCurrentExamState(null);
       setExams([]);
       if (typeof window !== 'undefined') {
         localStorage.removeItem('user_session');
@@ -117,6 +150,7 @@ export function ExamProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     setUser(loadFromStorage<UserSession>('user_session'));
     setExamState(loadFromStorage<ExamState>('exam_state') ?? DEFAULT_EXAM_STATE);
+    setCurrentExamState(loadFromStorage<ExamState>('current_exam_state') ?? null);
     setHasHydratedStorage(true);
   }, []);
 
@@ -169,6 +203,11 @@ export function ExamProvider({ children }: { children: ReactNode }) {
     saveToStorage('exam_state', examState);
   }, [examState, hasHydratedStorage]);
 
+  useEffect(() => {
+    if (!hasHydratedStorage) return;
+    saveToStorage('current_exam_state', currentExamState);
+  }, [currentExamState, hasHydratedStorage]);
+
   const login = useCallback(async (cpf: string) => {
     const me = await appCandidateApi.me();
     setUser({ 
@@ -202,14 +241,37 @@ export function ExamProvider({ children }: { children: ReactNode }) {
         throw new Error('Selecione um vestibular para iniciar a tentativa.');
       }
 
-      await appExamApi.start(examId);
+      const sessionId = getOrCreateExamSessionId();
+      if (!sessionId) {
+        throw new Error('Não foi possível iniciar a prova nesta aba.');
+      }
 
-      setExamState(s => ({ ...s, status: 'in_progress', startTimestamp: Date.now() }));
+      const started = await appExamApi.start(examId, { session_id: sessionId });
+      console.log('started', started)
+      const attemptUuid = extractAttemptUuid(started);
+      console.log('attemptUuid', attemptUuid)
+      if (!attemptUuid) {
+        throw new Error('Falha ao iniciar a prova: tentativa inválida.');
+      }
+
+      const now = Date.now();
+      const attemptId = attemptUuid;
+
+      armAttemptAccess(attemptId);
+
+      setCurrentExamState(() => ({
+        ...examState,
+        status: 'in_progress',
+        startTimestamp: now,
+        attemptId,
+      }) as ExamState);
+      setExamState(s => ({ ...s, status: 'in_progress', startTimestamp: now, attemptId }));
+      
     } catch (error) {
       if (handleExpiredSession(error)) return;
       throw error;
     }
-  }, [examState.selectedExamId]);
+  }, [examState, handleExpiredSession]);
 
   const calculateTimeTaken = useCallback(() => {
     const state = examStateRef.current;
@@ -225,9 +287,16 @@ export function ExamProvider({ children }: { children: ReactNode }) {
         throw new Error('Selecione um vestibular para atualizar.');
       }
 
+      const sessionId = getOrCreateExamSessionId();
+      if (!sessionId) {
+        throw new Error('Sessão da prova inválida.');
+      }
+
       const words = state.essay.trim() ? state.essay.trim().split(/\s+/).length : 0;
 
-      await appExamApi.update(examId, {
+      await httpClient.put(`candidate/exam/${examId}`, {
+        attempt_id: state.attemptId,
+        session_id: sessionId,
         text: state.essay,
         words_count: words,
         time_taken: calculateTimeTaken(),
@@ -268,7 +337,7 @@ export function ExamProvider({ children }: { children: ReactNode }) {
 
   return (
     <ExamContext.Provider value={{
-      user, examState, selectedExam, login, logout, selectExam, startExam,
+      user, examState, currentExamState, selectedExam, login, logout, selectExam, startExam,
       updateEssay, syncEssay, submitEssay, expireEssay, incrementTabSwitch, setResult, resetExam,
       exams,
     }}>

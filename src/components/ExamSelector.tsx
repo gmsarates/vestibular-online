@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { useExam } from '@/context/ExamContext';
+import { formatDuration, useExam } from '@/context/ExamContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNavigate } from '@tanstack/react-router';
@@ -10,14 +10,16 @@ import {
 import toast from 'react-hot-toast';
 
 export function ExamSelector() {
-  const { user, exams, selectExam, examState, login, logout, startExam, resetExam } = useExam();
+  const { user, exams, selectExam, examState, currentExamState, login, logout, startExam, resetExam } = useExam();
   const navigate = useNavigate();
   const [showStartConfirm, setShowStartConfirm] = useState(false);
+  const [showMultipleAttempts, setShowMultipleAttempts] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(0);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const startRequestedRef = useRef(false);
   
-
   const selectedExam = exams.find(e => e.id === examState.selectedExamId);
+  const currentStartedExam = exams.find(e => e.id === currentExamState?.selectedExamId);
 
   const handleStart = async () => {
     if (!selectedExam) {
@@ -32,9 +34,19 @@ export function ExamSelector() {
       setShowStartConfirm(false);
       navigate({ to: '/exam' });
     } catch (error) {
+      console.log(currentExamState, currentStartedExam)
       const message = error instanceof Error ? error.message : 'Falha ao iniciar a tentativa.';
-      toast.error(message);
-      resetExam();
+      if (message === 'Multiple attempts' && currentStartedExam !== null) {
+        const startedDate = new Date(currentExamState?.startTimestamp ?? '')
+        const now = new Date()
+        const elapsedTime = Math.floor((now - startedDate) / (1000 * 60))
+        
+        setTimeLeft((currentStartedExam?.durationMinutes ?? 0) - elapsedTime)
+        setShowMultipleAttempts(true)
+      } else {
+        toast.error(message);
+      }
+      //resetExam();
       startRequestedRef.current = false;
     }
   };
@@ -80,6 +92,24 @@ export function ExamSelector() {
         )}
       </div>
 
+      {/* Multiple attempts alert */}
+      <AlertDialog open={showMultipleAttempts} onOpenChange={setShowMultipleAttempts}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Tentativa em aberto</AlertDialogTitle>
+            <AlertDialogDescription>
+              Você já iniciou anteriormente a realização da prova <strong>{currentStartedExam?.name}</strong> e não pode
+              iniciar novamente. 
+              Você precisa esperar o tempo total da prova para poder iniciar um novo teste. 
+              Atualmente, faltam <strong>{formatDuration(timeLeft)}</strong> para finalizar.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Fechar</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      
       {/* Confirm start exam */}
       <AlertDialog open={showStartConfirm} onOpenChange={setShowStartConfirm}>
         <AlertDialogContent>
