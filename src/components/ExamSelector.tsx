@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { formatDuration, useExam } from '@/context/ExamContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,11 +8,10 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import toast from 'react-hot-toast';
-import { Exam } from '@gmsarates/vestibular-api-client';
 import { ExamConfig } from '@/lib/mock-data';
 
 export function ExamSelector() {
-  const { user, exams, selectExam, examState, currentExamState, login, logout, startExam, resetExam } = useExam();
+  const { user, exams, selectExam, examState, currentExamState, setActiveExam, login, logout, startExam, resetExam } = useExam();
   const navigate = useNavigate();
   const [showStartConfirm, setShowStartConfirm] = useState(false);
   const [showMultipleAttempts, setShowMultipleAttempts] = useState(false);
@@ -22,12 +21,44 @@ export function ExamSelector() {
   
   const selectedExam = exams.find(e => e.id === examState.selectedExamId);
   const currentStartedExam = exams.find(e => e.id === currentExamState?.selectedExamId);
+  const inProgressExam = exams.find(e => e.attempt != null);
+  const inProgressExamId = inProgressExam?.id ?? null;
+  const inProgressAttemptId = inProgressExam?.attempt?.id ?? null;
+  const inProgressStartedAt = inProgressExam?.attempt?.created_at_timestamp ?? null;
 
-  function calculateTimeLeft(startedDate: any, durationMinutes: any) {
-    const date = new Date(startedDate ?? '')
-    const now = new Date()
-    const elapsedTime = Math.floor((now - date) / (1000 * 60))
-    setTimeLeft((durationMinutes ?? 0) - elapsedTime)
+  useEffect(() => {
+    if (!inProgressExamId || !inProgressAttemptId) return;
+    if (currentExamState?.attemptId === inProgressAttemptId) return;
+
+    setActiveExam({
+      essay: '',
+      selectedExamId: inProgressExamId,
+      status: 'in_progress',
+      startTimestamp: inProgressStartedAt,
+      attemptId: inProgressAttemptId,
+      tabSwitchCount: 0,
+      result: null,
+    }, inProgressAttemptId);
+  }, [currentExamState?.attemptId, inProgressAttemptId, inProgressExamId, inProgressStartedAt, setActiveExam]);
+
+  function calculateTimeLeft(
+    startedDate: number | string | null | undefined,
+    durationMinutes: number | null | undefined,
+  ) {
+    const startedAtMs =
+      typeof startedDate === 'number'
+        ? startedDate
+        : startedDate
+          ? new Date(startedDate).getTime()
+          : Number.NaN;
+
+    if (!Number.isFinite(startedAtMs)) {
+      setTimeLeft(0);
+      return;
+    }
+
+    const elapsedMinutes = Math.floor((Date.now() - startedAtMs) / (1000 * 60));
+    setTimeLeft(Math.max(0, (durationMinutes ?? 0) - elapsedMinutes));
   }
 
   const handleStart = async () => {
@@ -44,9 +75,14 @@ export function ExamSelector() {
       navigate({ to: '/exam' });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Falha ao iniciar a tentativa.';
-      if (message === 'Multiple attempts' && currentStartedExam !== null) {
+      const startedExam = currentStartedExam ?? inProgressExam;
+      const startedAttempt = startedExam?.attempt ?? null;
+      if (message === 'Multiple attempts' && startedAttempt) {
         // aqui se eu clicar logo depois do login, nao ta pegando a prova que ta em andamento
-        calculateTimeLeft(currentExamState?.startTimestamp, currentStartedExam?.durationMinutes)
+        calculateTimeLeft(
+          currentExamState?.startTimestamp ?? startedAttempt.created_at_timestamp,
+          startedExam?.durationMinutes,
+        );
         setShowMultipleAttempts(true)
       } else {
         toast.error(message);
@@ -73,7 +109,8 @@ export function ExamSelector() {
 
         <div className="grid gap-4">
           {exams.map(exam => {
-            const disabled = exam.attempt !== null
+            const disabled = exam.attempt != null
+
             return (
             <Card
               key={exam.id}

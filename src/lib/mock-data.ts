@@ -1,3 +1,9 @@
+export interface ExamAttempt {
+  id: string;
+  created_at_timestamp: number;
+  [key: string]: unknown;
+}
+
 export interface ExamConfig {
   id: string;
   name: string;
@@ -8,7 +14,7 @@ export interface ExamConfig {
   durationMinutes: number;
   minWords: number;
   maxWords: number;
-  attempt?: object;
+  attempt: ExamAttempt | null;
 }
 
 export interface ExamResult {

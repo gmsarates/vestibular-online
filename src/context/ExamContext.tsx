@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from 'react';
-import { type ExamConfig, type ExamResult, MOCK_RESULT, saveToStorage, loadFromStorage } from '@/lib/mock-data';
+import { type ExamAttempt, type ExamConfig, type ExamResult, MOCK_RESULT, saveToStorage, loadFromStorage } from '@/lib/mock-data';
 import { appCandidateApi, appExamApi, clearAppToken, httpClient, type Exam } from '@gmsarates/vestibular-api-client';
 import { armAttemptAccess, getOrCreateExamSessionId } from '@/lib/exam-session';
 
@@ -32,6 +32,7 @@ interface ExamContextType {
   logout: () => void;
   selectExam: (id: string) => void;
   startExam: () => Promise<void>;
+  setActiveExam: (exam: ExamState, attemptId: string) => void;
   updateEssay: (text: string) => void;
   syncEssay: () => Promise<void>;
   submitEssay: () => void;
@@ -58,7 +59,7 @@ export const formatDuration = (duration: number) => {
   const hours = Math.floor(duration / 60)
   const minutes = duration % 60
 
-  let ret = []
+  const ret: string[] = []
   
   if (hours > 0) {
     ret.push(`${(hours < 10 ? '0' : '') + hours} hora${hours > 1 ? 's' : ''}`)
@@ -112,7 +113,7 @@ function toExamConfig(apiExam: Exam & { university?: { name?: string } }): ExamC
     durationMinutes: apiExam.duration,
     minWords: apiExam.min_words,
     maxWords: apiExam.max_words,
-    attempt: apiExam.attempt
+    attempt: (apiExam.attempt as ExamAttempt | null | undefined) ?? null,
   };
 }
 
@@ -248,9 +249,7 @@ export function ExamProvider({ children }: { children: ReactNode }) {
       }
 
       const started = await appExamApi.start(examId, { session_id: sessionId });
-      console.log('started', started)
       const attemptUuid = extractAttemptUuid(started);
-      console.log('attemptUuid', attemptUuid)
       if (!attemptUuid) {
         throw new Error('Falha ao iniciar a prova: tentativa inválida.');
       }
@@ -259,20 +258,25 @@ export function ExamProvider({ children }: { children: ReactNode }) {
       const attemptId = attemptUuid;
 
       armAttemptAccess(attemptId);
-
-      setCurrentExamState(() => ({
-        ...examState,
-        status: 'in_progress',
-        startTimestamp: now,
-        attemptId,
-      }) as ExamState);
       setExamState(s => ({ ...s, status: 'in_progress', startTimestamp: now, attemptId }));
-      
+      setActiveExam(examState, attemptId);
     } catch (error) {
       if (handleExpiredSession(error)) return;
       throw error;
     }
   }, [examState, handleExpiredSession]);
+
+  const setActiveExam = useCallback((exam: ExamState, attemptId: string) => {
+    const now = Date.now();
+    const startTimestamp = exam.startTimestamp ?? now;
+
+    setCurrentExamState(() => ({
+      ...exam,
+      status: 'in_progress',
+      startTimestamp,
+      attemptId,
+    }) as ExamState);
+  }, []);
 
   const calculateTimeTaken = useCallback(() => {
     const state = examStateRef.current;
@@ -358,7 +362,7 @@ export function ExamProvider({ children }: { children: ReactNode }) {
 
   return (
     <ExamContext.Provider value={{
-      user, examState, currentExamState, selectedExam, login, logout, selectExam, startExam,
+      user, examState, currentExamState, selectedExam, login, logout, selectExam, startExam, setActiveExam,
       updateEssay, syncEssay, submitEssay, expireEssay, incrementTabSwitch, setResult, resetExam,
       exams,
     }}>
