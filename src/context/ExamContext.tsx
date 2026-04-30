@@ -361,9 +361,26 @@ export function ExamProvider({ children }: { children: ReactNode }) {
     setExamState(DEFAULT_EXAM_STATE);
   }, []);
 
+  const viewSubmittedExam = useCallback((examId: string): boolean => {
+    const exam = exams.find(e => e.id === examId);
+    if (!exam || !exam.attempt) return false;
+    const attempt = exam.attempt;
+    setExamState({
+      essay: typeof attempt.text === 'string' ? attempt.text : '',
+      status: 'submitted',
+      selectedExamId: examId,
+      startTimestamp: attempt.created_at_timestamp ?? null,
+      attemptId: attempt.id,
+      tabSwitchCount: 0,
+      result: MOCK_RESULT,
+    });
+    return true;
+  }, [exams]);
+
   return (
     <ExamContext.Provider value={{
       user, examState, currentExamState, selectedExam, login, logout, selectExam, startExam, setActiveExam,
+      viewSubmittedExam,
       updateEssay, syncEssay, submitEssay, expireEssay, incrementTabSwitch, setResult, resetExam,
       exams,
     }}>
