@@ -1,6 +1,10 @@
 export interface ExamAttempt {
   id: string;
   created_at_timestamp: number;
+  text?: string | null;
+  submitted_at?: string | number | null;
+  submitted_at_timestamp?: number | null;
+  status?: string | null;
   [key: string]: unknown;
 }
 
