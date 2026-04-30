@@ -57,12 +57,12 @@ function ExamPage() {
       try {
         // Backend must validate that this `session_id` matches the one used on attempt creation.
         await appExamApi.update(examState.selectedExamId ?? '', {
-          attempt_id: examState.attemptId,
+          attempt_id: examState.attemptId ?? '',
           session_id: sessionId,
         });
 
         if (cancelled) return;
-        if (!consumeAttemptAccess(examState.attemptId)) {
+        if (!consumeAttemptAccess(examState.attemptId ?? '')) {
           setIsReopenBlocked(true);
           setBlockedReason('Esta tentativa já foi aberta (ou a aba foi recarregada).');
           return;
