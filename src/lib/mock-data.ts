@@ -1,10 +1,18 @@
+export enum ExamAttemptStatus {
+  ATTEMPT_IN_PROGRESS = 'Em andamento',
+  REVIEW_PENDING = 'Correção pendente',
+  REVIEW_IN_PROGRESS = 'Correção em andamento',
+  AI_REVIEWED = 'Corrigida',
+  MANUAL_REVIEWED = 'Corrigida',
+}
+
 export interface ExamAttempt {
   id: string;
   created_at_timestamp: number;
   text?: string | null;
   submitted_at?: string | number | null;
   submitted_at_timestamp?: number | null;
-  status?: string | null;
+  status: ExamAttemptStatus;
   [key: string]: unknown;
 }
 

@@ -116,7 +116,7 @@ export function EssayEditor() {
   }
 
   const words = examState.essay.trim() ? examState.essay.trim().split(/\s+/).length : 0;
-  const chars = examState.essay.length;
+  const chars = examState.essay.length;  
   const isEditable = examState.status === 'in_progress';
   const progress = Math.min(100, (words / selectedExam.minWords) * 100);
 

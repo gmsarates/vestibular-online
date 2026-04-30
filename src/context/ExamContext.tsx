@@ -371,7 +371,7 @@ export function ExamProvider({ children }: { children: ReactNode }) {
       selectedExamId: examId,
       startTimestamp: attempt.created_at_timestamp ?? null,
       attemptId: attempt.id,
-      tabSwitchCount: 0,
+      tabSwitchCount: attempt.tabs_count as number ?? 0,
       result: MOCK_RESULT,
     });
     return true;

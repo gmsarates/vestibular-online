@@ -8,7 +8,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import toast from 'react-hot-toast';
-import { ExamConfig } from '@/lib/mock-data';
+import { ExamAttemptStatus, ExamConfig } from '@/lib/mock-data';
 
 export function ExamSelector() {
   const { user, exams, selectExam, examState, currentExamState, setActiveExam, viewSubmittedExam, login, logout, startExam, resetExam } = useExam();
@@ -21,9 +21,8 @@ export function ExamSelector() {
 
   const isAttemptSubmitted = (attempt: ExamConfig['attempt']) => {
     if (!attempt) return false;
-    if (attempt.submitted_at) return true;
-    if (attempt.submitted_at_timestamp) return true;
-    if (typeof attempt.status === 'string' && ['submitted', 'expired', 'finished', 'completed'].includes(attempt.status)) return true;
+    if (attempt.status !== 'ATTEMPT_IN_PROGRESS') return true;
+    
     return false;
   };
 
@@ -145,7 +144,7 @@ export function ExamSelector() {
                   <span>{exam.name}</span>
                   {submitted && (
                     <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded">
-                      ✓ Enviada
+                      {ExamAttemptStatus[exam.attempt?.status as keyof typeof ExamAttemptStatus]}
                     </span>
                   )}
                 </CardTitle>
