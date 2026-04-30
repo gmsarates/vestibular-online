@@ -33,6 +33,7 @@ interface ExamContextType {
   selectExam: (id: string) => void;
   startExam: () => Promise<void>;
   setActiveExam: (exam: ExamState, attemptId: string) => void;
+  viewSubmittedExam: (examId: string) => boolean;
   updateEssay: (text: string) => void;
   syncEssay: () => Promise<void>;
   submitEssay: () => void;
