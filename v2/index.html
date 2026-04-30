@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vestibular Online — Plataforma de Redação</title>
+    <meta name="description" content="Plataforma de vestibular online focada em redação. Faça login e inicie sua prova." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+    <script type="module" src="/assets/js/app.js"></script>
+</head>
+<body>
+
+<!-- ================================ TOAST ================================ -->
+<div id="toast-container"></div>
+
+<!-- ================================ MODAL (Alert Dialog) ================================ -->
+<div id="modal-overlay" class="modal-overlay hidden">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3 id="modal-title" class="modal-title"></h3>
+        </div>
+        <div class="modal-body">
+            <p id="modal-description" class="modal-description"></p>
+        </div>
+        <div class="modal-footer" id="modal-footer"></div>
+    </div>
+</div>
+
+<!-- ================================ TELA: LOGIN ================================ -->
+<div id="screen-login" class="screen">
+    <div class="auth-wrapper">
+        <div class="auth-card card">
+            <div class="card-header text-center">
+                <div class="brand-icon">📝</div>
+                <h1 class="card-title">Vestibular Online</h1>
+                <p class="card-description">Plataforma de Redação</p>
+            </div>
+            <div class="card-content">
+                <div class="form-group">
+                    <label class="form-label" for="login-cpf">CPF</label>
+                    <input class="form-input" id="login-cpf" placeholder="000.000.000-00" maxlength="14" autocomplete="off" />
+                </div>
+
+                <div id="login-step1">
+                    <button class="btn btn-primary btn-full" id="btn-send-otp">Enviar código de verificação</button>
+                </div>
+
+                <div id="login-step2" class="hidden">
+                    <div class="form-group">
+                        <label class="form-label" for="login-otp">Código de verificação</label>
+                        <input class="form-input otp-input" id="login-otp" placeholder="000000" maxlength="6" autocomplete="off" />
+                    </div>
+                    <button class="btn btn-primary btn-full" id="btn-login">Entrar</button>
+                    <button class="btn-link" id="btn-resend-otp">Reenviar código</button>
+                </div>
+
+                <button class="btn btn-outline btn-full mt-sm" id="btn-show-register">Criar cadastro</button>
+
+                <p id="login-error" class="form-error hidden"></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ================================ TELA: CADASTRO ================================ -->
+<div id="screen-register" class="screen hidden">
+    <div class="auth-wrapper">
+        <div class="auth-card card">
+            <div class="card-header text-center">
+                <div class="brand-icon">✨</div>
+                <h1 class="card-title" id="register-title">Criar Cadastro</h1>
+                <p class="card-description" id="register-subtitle">Preencha seus dados para se cadastrar</p>
+            </div>
+            <div class="card-content">
+                <!-- Step 1: Dados -->
+                <div id="register-step1">
+                    <div class="form-group">
+                        <label class="form-label" for="reg-name">Nome completo</label>
+                        <input class="form-input" id="reg-name" placeholder="Seu nome completo" maxlength="255" autocomplete="name" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="reg-cpf">CPF</label>
+                        <input class="form-input" id="reg-cpf" placeholder="000.000.000-00" maxlength="14" autocomplete="off" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="reg-email">Email</label>
+                        <input class="form-input" id="reg-email" type="email" placeholder="seu@email.com" maxlength="255" autocomplete="email" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="reg-phone">Telefone</label>
+                        <input class="form-input" id="reg-phone" placeholder="(00) 00000-0000" maxlength="16" autocomplete="tel" />
+                    </div>
+                    <button class="btn btn-primary btn-full" id="btn-register">Cadastrar</button>
+                    <button class="btn btn-ghost btn-full mt-xs" id="btn-back-login-from-register">Voltar para login</button>
+                </div>
+
+                <!-- Step 2: OTP -->
+                <div id="register-step2" class="hidden">
+                    <div class="form-group">
+                        <label class="form-label" for="reg-otp">Código de verificação</label>
+                        <input class="form-input otp-input" id="reg-otp" placeholder="000000" maxlength="6" autocomplete="one-time-code" />
+                    </div>
+                    <button class="btn btn-primary btn-full" id="btn-verify-otp">Verificar e entrar</button>
+                    <button class="btn-link" id="btn-resend-reg-otp">Reenviar código</button>
+                    <button class="btn btn-ghost btn-full mt-xs" id="btn-back-login-from-otp">Voltar para login</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ================================ TELA: SELEÇÃO DE PROVA ================================ -->
+<div id="screen-selector" class="screen hidden">
+    <div class="selector-wrapper">
+        <div class="selector-header">
+            <div>
+                <h1 class="greeting" id="greeting-name">Olá, bem-vindo!</h1>
+            </div>
+            <button class="btn btn-ghost" id="btn-logout">Sair</button>
+        </div>
+        <p class="selector-hint">Verifique abaixo os vestibulares disponíveis para seu perfil.</p>
+
+        <div id="exams-list" class="exams-list">
+            <!-- Exams cards inserted by JS -->
+            <div class="loading-spinner-wrap">
+                <div class="spinner"></div>
+            </div>
+        </div>
+
+        <div id="start-exam-bar" class="start-bar hidden">
+            <button class="btn btn-primary btn-lg" id="btn-start-exam">Iniciar Prova</button>
+        </div>
+    </div>
+</div>
+
+<!-- ================================ TELA: EDITOR DE REDAÇÃO ================================ -->
+<div id="screen-exam" class="screen hidden">
+    <!-- Tab warning overlay -->
+    <div id="tab-warning" class="tab-warning hidden">
+        <div class="tab-warning-content">
+            <p class="tab-warning-title">⚠️ Atenção!</p>
+            <p>Troca de aba detectada. Isso será registrado.</p>
+            <p id="tab-switch-warning-count" class="tab-warning-count"></p>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="exam-header">
+        <div class="exam-header-inner">
+            <div class="exam-header-left">
+                <h1 class="exam-title" id="exam-header-name"></h1>
+                <span class="autosave-badge hidden" id="autosave-badge">✓ Salvo</span>
+            </div>
+            <div class="exam-header-right">
+                <div class="timer" id="exam-timer"></div>
+                <button class="btn-icon" id="btn-fullscreen" title="Modo foco">
+                    <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="exam-main">
+        <!-- Status banners -->
+        <div id="banner-submitted" class="banner banner-success hidden">
+            <p class="banner-text">✓ Redação enviada com sucesso!</p>
+            <div class="banner-actions">
+                <button class="btn-link" id="btn-go-result-from-submitted">Ver resultado →</button>
+                <button class="btn btn-outline btn-sm" id="btn-go-home-from-submitted">Voltar para vestibulares</button>
+            </div>
+        </div>
+        <div id="banner-expired" class="banner banner-danger hidden">
+            <p class="banner-text">⏱ Tempo esgotado! Redação expirada.</p>
+            <div class="banner-actions">
+                <button class="btn-link" id="btn-go-result-from-expired">Ver resultado →</button>
+                <button class="btn btn-outline btn-sm" id="btn-go-home-from-expired">Voltar para vestibulares</button>
+            </div>
+        </div>
+
+        <!-- Tema -->
+        <div class="card">
+            <div class="card-header">
+                <p class="card-label">Tema da redação</p>
+            </div>
+            <div class="card-content">
+                <p class="exam-theme" id="exam-theme"></p>
+                <div class="exam-description" id="exam-instructions"></div>
+            </div>
+        </div>
+
+        <!-- Editor -->
+        <div class="editor-wrap">
+        <textarea
+            id="essay-textarea"
+            class="essay-textarea"
+            placeholder="Comece a escrever sua redação aqui..."
+            spellcheck="true"
+        ></textarea>
+
+            <div class="editor-meta">
+                <div class="editor-counters">
+                    <span id="char-count">0 caracteres</span>
+                    <span id="word-count">0 palavras</span>
+                    <span id="tab-count">0 trocas de abas</span>
+                </div>
+                <div class="progress-wrap">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+                    </div>
+                    <span class="progress-label" id="progress-label">0/0 min</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ações -->
+        <div class="exam-actions" id="exam-actions">
+            <button class="btn btn-outline" id="btn-exit-exam">Sair da Prova</button>
+            <button class="btn btn-primary" id="btn-submit-essay" disabled>Enviar Redação</button>
+        </div>
+    </main>
+</div>
+
+<!-- ================================ TELA: RESULTADO ================================ -->
+<div id="screen-result" class="screen hidden">
+    <div class="auth-wrapper">
+        <div class="result-card card">
+            <div class="card-header text-center">
+                <h1 class="card-title">Resultado da Redação</h1>
+                <p class="card-description" id="result-exam-info"></p>
+            </div>
+            <div class="card-content result-content">
+                <!-- Status -->
+                <div class="result-section text-center">
+                    <p class="result-label">Status</p>
+                    <p class="result-status" id="result-status-text"></p>
+                </div>
+
+                <!-- Exam status -->
+                <div class="result-box">
+                    <p class="result-label">Status da prova</p>
+                    <p class="result-value" id="result-exam-status"></p>
+                </div>
+
+                <!-- Grade -->
+                <div class="result-section text-center" id="result-grade-wrap">
+                    <p class="result-label">Nota</p>
+                    <p class="result-grade" id="result-grade"></p>
+                </div>
+
+                <!-- Feedback -->
+                <div class="result-feedback-box" id="result-feedback-wrap">
+                    <p class="result-label mb-xs">Feedback</p>
+                    <p class="result-feedback" id="result-feedback"></p>
+                </div>
+
+                <div class="result-actions">
+                    <button class="btn btn-outline" id="btn-result-back">Voltar</button>
+                    <button class="btn btn-ghost" id="btn-result-logout">Sair</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ================================ LOADING GLOBAL ================================ -->
+<div id="global-loading" class="global-loading hidden">
+    <div class="spinner"></div>
+</div>
+
+</body>
+</html>

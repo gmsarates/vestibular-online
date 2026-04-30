@@ -1,0 +1,16 @@
+{
+    "$schema": "https://www.schemastore.org/package.json",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "build": "vite build",
+        "dev": "vite"
+    },
+    "devDependencies": {
+        "concurrently": "^9.0.1",
+        "vite": "^8.0.0"
+    },
+    "dependencies": {
+        "jquery": "^4.0.0"
+    }
+}
