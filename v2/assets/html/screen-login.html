@@ -1,0 +1,36 @@
+<!-- ================================ TELA: LOGIN ================================ -->
+<div id="screen-login" class="screen">
+    <div class="auth-wrapper">
+        <div class="auth-card card">
+            <div class="card-header text-center">
+                <div class="brand-icon">📝</div>
+                <h1 class="card-title">Vestibular Online</h1>
+                <p class="card-description">Plataforma de Redação</p>
+            </div>
+            <div class="card-content">
+                <div class="form-group">
+                    <label class="form-label" for="login-cpf">CPF</label>
+                    <input class="form-input" id="login-cpf" placeholder="000.000.000-00" maxlength="14" autocomplete="off" />
+                </div>
+
+                <div id="login-step1">
+                    <button class="btn btn-primary btn-full" id="btn-send-otp">Enviar código de verificação</button>
+                </div>
+
+                <div id="login-step2" class="hidden">
+                    <div class="form-group">
+                        <label class="form-label" for="login-otp">Código de verificação</label>
+                        <input class="form-input otp-input" id="login-otp" placeholder="000000" maxlength="6" autocomplete="off" />
+                    </div>
+                    <button class="btn btn-primary btn-full" id="btn-login">Entrar</button>
+                    <button class="btn-link" id="btn-resend-otp">Reenviar código</button>
+                </div>
+
+                <button class="btn btn-outline btn-full mt-sm" id="btn-show-register">Criar cadastro</button>
+
+                <p id="login-error" class="form-error hidden"></p>
+            </div>
+        </div>
+    </div>
+</div>
+

@@ -1,3 +1,5 @@
+import { config } from './config.js';
+
 export class Api {
     constructor(httpClient) {
         this.httpClient = httpClient;
@@ -5,27 +7,27 @@ export class Api {
 
     // Login: enviar OTP
     apiSendOtp(cpf) {
-        return this.httpClient.post('/candidate/auth/login', { document: cpf, university_id: config.universityId });
+        return this.httpClient.post('/auth/login', { document: cpf, university_id: config.universityId });
     }
 
     // Login: validar OTP
     apiValidateOtp(cpf, code) {
-        return this.httpClient.post('/candidate/auth/login/verify', { document: cpf, code: code, university_id: config.universityId });
+        return this.httpClient.post('/auth/login/verify', { document: cpf, code: code, university_id: config.universityId });
     }
 
     // Cadastro
     apiRegister(cpf, name, email, phone) {
-        return this.httpClient.post('/candidate', { university_id: config.universityId, document: cpf, name: name, email: email, phone: phone });
+        return this.httpClient.post('', { university_id: config.universityId, document: cpf, name: name, email: email, phone: phone });
     }
 
     // Me
     apiMe() {
-        return this.httpClient.get('/candidate/me');
+        return this.httpClient.get('/me');
     }
 
     // Listar provas
     apiListExams() {
-        return this.httpClient.get('/candidate/exam');
+        return this.httpClient.get('/exam');
     }
 
     // Iniciar tentativa

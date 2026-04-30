@@ -6,18 +6,15 @@ import {
     toast,
     persist,
     showScreen,
-    renderExams,
-    loadExamsAndGoSelector
 } from "../helper.js";
 
 import { $ } from "jquery";
 
-
-
 export class Login {
-    constructor(api, state) {
+    constructor(api, state, opts = {}) {
         this.api = api;
         this.state = state;
+        this.onLoggedIn = opts.onLoggedIn || null;
     }
 
     init() {
@@ -36,7 +33,7 @@ export class Login {
         });
 
         // Enviar OTP
-        $('#btn-send-otp').on('click', function() {
+        $('#btn-send-otp').on('click', () => {
             let cpf = $('#login-cpf').val();
 
             if (!validateCPF(cpf)) {
@@ -56,7 +53,7 @@ export class Login {
         });
 
         // Reenviar OTP
-        $('#btn-resend-otp').on('click', function() {
+        $('#btn-resend-otp').on('click', () => {
             let cpf = $('#login-cpf').val();
 
             if (!validateCPF(cpf)) {
@@ -74,9 +71,7 @@ export class Login {
         });
 
         // Login com OTP
-        $('#btn-login').on('click', function() {
-            const _this = this;
-
+        $('#btn-login').on('click', () => {
             let cpf = $('#login-cpf').val().replace(/\D/g, '');
             let otp = $('#login-otp').val().replace(/\D/g, '');
 
@@ -87,13 +82,15 @@ export class Login {
 
             showLoading();
 
-            this.api.apiValidateOtp(cpf, otp).then(function(res) {
-                if (res && res.token) {
-                    _this.state.token = res.token;
-                    _this.state.tokenExpires = res.expires || null;
+            this.api.apiValidateOtp(cpf, otp).then((res) => {
+                if (!res || !res.token)
+                    throw new Error('Resposta inválida do servidor.');
 
-                    return _this.api.apiMe().then(function(me) {
-                        _this.state.user = {
+                this.state.token = res.token;
+                this.state.tokenExpires = res.expires || null;
+
+                return this.api.apiMe().then((me) => {
+                    this.state.user = {
                             cpf: cpf,
                             name: me.name,
                             email: me.email,
@@ -101,13 +98,12 @@ export class Login {
                             loggedInAt: Date.now()
                         };
 
-                        persist();
-                        resetLoginForm();
-                        loadExamsAndGoSelector(this.api);
-                    });
-                } else {
-                    throw new Error('Resposta inválida do servidor.');
-                }
+                    persist(this.state);
+                    resetLoginForm();
+
+                    if (this.onLoggedIn)
+                        this.onLoggedIn();
+                });
             }).fail(function(err) {
                 toast(err.message || 'Código de verificação inválido. Tente novamente.', 'error');
             }).always(hideLoading);

@@ -6,16 +6,16 @@ import {
     toast,
     persist,
     showScreen,
-    renderExams,
-    loadExamsAndGoSelector, formatPhone
+    formatPhone
 } from "../helper.js";
 
 import { $ } from "jquery";
 
 export class Register {
-    constructor(api, state) {
+    constructor(api, state, opts = {}) {
         this.api = api;
         this.state = state;
+        this.onLoggedIn = opts.onLoggedIn || null;
     }
 
     resetRegisterForm() {
@@ -82,11 +82,13 @@ export class Register {
                 if (res && res.token) {
                     _this.state.token = res.token;
                     _this.state.tokenExpires = res.expires || null;
-                    return apiMe().then(function(me) {
+                    return _this.api.apiMe().then(function(me) {
                         _this.state.user = { cpf: cpf, name: me.name, email: me.email, phone: me.phone, loggedInAt: Date.now() };
-                        persist();
+                        persist(_this.state);
                         _this.resetRegisterForm();
-                        loadExamsAndGoSelector();
+
+                        if (_this.onLoggedIn)
+                            _this.onLoggedIn();
                     });
                 }
             }).fail(function() {

@@ -1,0 +1,89 @@
+<!-- ================================ TELA: EDITOR DE REDAÇÃO ================================ -->
+<div id="screen-exam" class="screen hidden">
+    <!-- Tab warning overlay -->
+    <div id="tab-warning" class="tab-warning hidden">
+        <div class="tab-warning-content">
+            <p class="tab-warning-title">⚠️ Atenção!</p>
+            <p>Troca de aba detectada. Isso será registrado.</p>
+            <p id="tab-switch-warning-count" class="tab-warning-count"></p>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="exam-header">
+        <div class="exam-header-inner">
+            <div class="exam-header-left">
+                <h1 class="exam-title" id="exam-header-name"></h1>
+                <span class="autosave-badge hidden" id="autosave-badge">✓ Salvo</span>
+            </div>
+            <div class="exam-header-right">
+                <div class="timer" id="exam-timer"></div>
+                <button class="btn-icon" id="btn-fullscreen" title="Modo foco">
+                    <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="exam-main">
+        <!-- Status banners -->
+        <div id="banner-submitted" class="banner banner-success hidden">
+            <p class="banner-text">✓ Redação enviada com sucesso!</p>
+            <div class="banner-actions">
+                <button class="btn-link" id="btn-go-result-from-submitted">Ver resultado →</button>
+                <button class="btn btn-outline btn-sm" id="btn-go-home-from-submitted">Voltar para vestibulares</button>
+            </div>
+        </div>
+        <div id="banner-expired" class="banner banner-danger hidden">
+            <p class="banner-text">⏱ Tempo esgotado! Redação expirada.</p>
+            <div class="banner-actions">
+                <button class="btn-link" id="btn-go-result-from-expired">Ver resultado →</button>
+                <button class="btn btn-outline btn-sm" id="btn-go-home-from-expired">Voltar para vestibulares</button>
+            </div>
+        </div>
+
+        <!-- Tema -->
+        <div class="card">
+            <div class="card-header">
+                <p class="card-label">Tema da redação</p>
+            </div>
+            <div class="card-content">
+                <p class="exam-theme" id="exam-theme"></p>
+                <div class="exam-description" id="exam-instructions"></div>
+            </div>
+        </div>
+
+        <!-- Editor -->
+        <div class="editor-wrap">
+        <textarea
+            id="essay-textarea"
+            class="essay-textarea"
+            placeholder="Comece a escrever sua redação aqui..."
+            spellcheck="true"
+        ></textarea>
+
+            <div class="editor-meta">
+                <div class="editor-counters">
+                    <span id="char-count">0 caracteres</span>
+                    <span id="word-count">0 palavras</span>
+                    <span id="tab-count">0 trocas de abas</span>
+                </div>
+                <div class="progress-wrap">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+                    </div>
+                    <span class="progress-label" id="progress-label">0/0 min</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ações -->
+        <div class="exam-actions" id="exam-actions">
+            <button class="btn btn-outline" id="btn-exit-exam">Sair da Prova</button>
+            <button class="btn btn-primary" id="btn-submit-essay" disabled>Enviar Redação</button>
+        </div>
+    </main>
+</div>
+

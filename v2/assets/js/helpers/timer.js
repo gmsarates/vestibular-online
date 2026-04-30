@@ -1,29 +1,35 @@
 import { $ } from "jquery";
 import {
     getSelectedExam,
-} from "../helper";
+    persist,
+} from "../helper.js";
 
 export class Timer {
     constructor(state) {
         this.state = state;
+        this.onExpire = null;
     }
 
-    startTimer() {
-        this.stopTimer();
-        if (this.state.examState.status !== 'in_progress') return;
-        this.updateTimer();
-        this.state.timerInterval = setInterval(this.updateTimer, 1000);
+    start(opts = {}) {
+        this.onExpire = opts.onExpire || null;
+        this.stop();
+
+        if (this.state.examState.status !== 'in_progress')
+            return;
+
+        this.update();
+        this.state.timerInterval = setInterval(() => this.update(), 1000);
     }
 
-    stopTimer() {
+    stop() {
         if (this.state.timerInterval) { clearInterval(this.state.timerInterval); this.state.timerInterval = null; }
     }
 
-    updateTimer() {
+    update() {
         let exam = getSelectedExam(this.state);
         if (!exam || this.state.examState.status !== 'in_progress') {
             $('#exam-timer').text('');
-            this.stopTimer();
+            this.stop();
             return;
         }
         let dur = (exam.duration || exam.durationMinutes || 0) * 60 * 1000;
@@ -45,12 +51,11 @@ export class Timer {
 
         if (left <= 0) {
             this.state.examState.status = 'expired';
-            persist();
-            this.stopTimer();
-            $('#essay-textarea').prop('disabled', true);
-            updateEditorBanners();
-            // Tentar submeter automaticamente no backend
-            syncEssay().catch(function() {});
+            persist(this.state);
+            this.stop();
+
+            if (this.onExpire)
+                this.onExpire();
         }
     }
 }
