@@ -11,17 +11,25 @@ import toast from 'react-hot-toast';
 import { ExamConfig } from '@/lib/mock-data';
 
 export function ExamSelector() {
-  const { user, exams, selectExam, examState, currentExamState, setActiveExam, login, logout, startExam, resetExam } = useExam();
+  const { user, exams, selectExam, examState, currentExamState, setActiveExam, viewSubmittedExam, login, logout, startExam, resetExam } = useExam();
   const navigate = useNavigate();
   const [showStartConfirm, setShowStartConfirm] = useState(false);
   const [showMultipleAttempts, setShowMultipleAttempts] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const startRequestedRef = useRef(false);
-  
+
+  const isAttemptSubmitted = (attempt: ExamConfig['attempt']) => {
+    if (!attempt) return false;
+    if (attempt.submitted_at) return true;
+    if (attempt.submitted_at_timestamp) return true;
+    if (typeof attempt.status === 'string' && ['submitted', 'expired', 'finished', 'completed'].includes(attempt.status)) return true;
+    return false;
+  };
+
   const selectedExam = exams.find(e => e.id === examState.selectedExamId);
   const currentStartedExam = exams.find(e => e.id === currentExamState?.selectedExamId);
-  const inProgressExam = exams.find(e => e.attempt != null);
+  const inProgressExam = exams.find(e => e.attempt != null && !isAttemptSubmitted(e.attempt));
   const inProgressExamId = inProgressExam?.id ?? null;
   const inProgressAttemptId = inProgressExam?.attempt?.id ?? null;
   const inProgressStartedAt = inProgressExam?.attempt?.created_at_timestamp ?? null;
@@ -92,8 +100,17 @@ export function ExamSelector() {
     }
   };
 
+  const handleSubmittedClick = (exam: ExamConfig) => {
+    if (viewSubmittedExam(exam.id)) {
+      navigate({ to: '/exam' });
+    }
+  };
+
   const handleDisabledClick = (exam: ExamConfig) => {
-    console.log(exam.attempt)
+    if (isAttemptSubmitted(exam.attempt)) {
+      handleSubmittedClick(exam);
+      return;
+    }
     calculateTimeLeft(exam?.attempt?.created_at_timestamp, exam.durationMinutes)
     setShowMultipleAttempts(true)
   }
@@ -109,17 +126,29 @@ export function ExamSelector() {
 
         <div className="grid gap-4">
           {exams.map(exam => {
-            const disabled = exam.attempt != null
+            const submitted = isAttemptSubmitted(exam.attempt);
+            const hasUnfinishedAttempt = exam.attempt != null && !submitted;
+            const clickable = !hasUnfinishedAttempt; // submitted is clickable (view), idle is clickable (select)
 
             return (
             <Card
               key={exam.id}
-              className={`${disabled ? '' : 'cursor-pointer transition-shadow hover:shadow-lg' }  ${examState.selectedExamId === exam.id ? 'ring-2 ring-primary' : ''}`}
-              onClick={() => disabled ? handleDisabledClick(exam) : selectExam(exam.id) }
+              className={`${clickable ? 'cursor-pointer transition-shadow hover:shadow-lg' : ''}  ${examState.selectedExamId === exam.id && !submitted ? 'ring-2 ring-primary' : ''} ${submitted ? 'border-primary/40' : ''}`}
+              onClick={() => {
+                if (submitted) return handleSubmittedClick(exam);
+                if (hasUnfinishedAttempt) return handleDisabledClick(exam);
+                return selectExam(exam.id);
+              }}
             >
               <CardHeader>
-                <CardTitle>{exam.name}</CardTitle>
-                {/* <CardDescription></CardDescription> */}
+                <CardTitle className="flex items-center justify-between gap-2">
+                  <span>{exam.name}</span>
+                  {submitted && (
+                    <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded">
+                      ✓ Enviada
+                    </span>
+                  )}
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
@@ -128,13 +157,16 @@ export function ExamSelector() {
                 <p className="text-sm text-muted-foreground">
                   <strong>Conteúdo:</strong> de {exam.minWords} a {exam.maxWords} palavras
                 </p>
+                {submitted && (
+                  <p className="text-xs text-primary mt-2">Clique para visualizar sua redação enviada.</p>
+                )}
               </CardContent>
             </Card>
           )
           })}
         </div>
 
-        {examState.selectedExamId && (
+        {examState.selectedExamId && selectedExam && !isAttemptSubmitted(selectedExam.attempt) && (
           <div className="flex justify-center">
             <Button size="lg" onClick={() => setShowStartConfirm(true)}>
               Iniciar Prova
