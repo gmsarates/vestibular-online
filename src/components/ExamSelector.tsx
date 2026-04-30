@@ -11,17 +11,25 @@ import toast from 'react-hot-toast';
 import { ExamConfig } from '@/lib/mock-data';
 
 export function ExamSelector() {
-  const { user, exams, selectExam, examState, currentExamState, setActiveExam, login, logout, startExam, resetExam } = useExam();
+  const { user, exams, selectExam, examState, currentExamState, setActiveExam, viewSubmittedExam, login, logout, startExam, resetExam } = useExam();
   const navigate = useNavigate();
   const [showStartConfirm, setShowStartConfirm] = useState(false);
   const [showMultipleAttempts, setShowMultipleAttempts] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const startRequestedRef = useRef(false);
-  
+
+  const isAttemptSubmitted = (attempt: ExamConfig['attempt']) => {
+    if (!attempt) return false;
+    if (attempt.submitted_at) return true;
+    if (attempt.submitted_at_timestamp) return true;
+    if (typeof attempt.status === 'string' && ['submitted', 'expired', 'finished', 'completed'].includes(attempt.status)) return true;
+    return false;
+  };
+
   const selectedExam = exams.find(e => e.id === examState.selectedExamId);
   const currentStartedExam = exams.find(e => e.id === currentExamState?.selectedExamId);
-  const inProgressExam = exams.find(e => e.attempt != null);
+  const inProgressExam = exams.find(e => e.attempt != null && !isAttemptSubmitted(e.attempt));
   const inProgressExamId = inProgressExam?.id ?? null;
   const inProgressAttemptId = inProgressExam?.attempt?.id ?? null;
   const inProgressStartedAt = inProgressExam?.attempt?.created_at_timestamp ?? null;
