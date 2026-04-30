@@ -100,8 +100,17 @@ export function ExamSelector() {
     }
   };
 
+  const handleSubmittedClick = (exam: ExamConfig) => {
+    if (viewSubmittedExam(exam.id)) {
+      navigate({ to: '/exam' });
+    }
+  };
+
   const handleDisabledClick = (exam: ExamConfig) => {
-    console.log(exam.attempt)
+    if (isAttemptSubmitted(exam.attempt)) {
+      handleSubmittedClick(exam);
+      return;
+    }
     calculateTimeLeft(exam?.attempt?.created_at_timestamp, exam.durationMinutes)
     setShowMultipleAttempts(true)
   }
@@ -117,17 +126,29 @@ export function ExamSelector() {
 
         <div className="grid gap-4">
           {exams.map(exam => {
-            const disabled = exam.attempt != null
+            const submitted = isAttemptSubmitted(exam.attempt);
+            const hasUnfinishedAttempt = exam.attempt != null && !submitted;
+            const clickable = !hasUnfinishedAttempt; // submitted is clickable (view), idle is clickable (select)
 
             return (
             <Card
               key={exam.id}
-              className={`${disabled ? '' : 'cursor-pointer transition-shadow hover:shadow-lg' }  ${examState.selectedExamId === exam.id ? 'ring-2 ring-primary' : ''}`}
-              onClick={() => disabled ? handleDisabledClick(exam) : selectExam(exam.id) }
+              className={`${clickable ? 'cursor-pointer transition-shadow hover:shadow-lg' : ''}  ${examState.selectedExamId === exam.id && !submitted ? 'ring-2 ring-primary' : ''} ${submitted ? 'border-primary/40' : ''}`}
+              onClick={() => {
+                if (submitted) return handleSubmittedClick(exam);
+                if (hasUnfinishedAttempt) return handleDisabledClick(exam);
+                return selectExam(exam.id);
+              }}
             >
               <CardHeader>
-                <CardTitle>{exam.name}</CardTitle>
-                {/* <CardDescription></CardDescription> */}
+                <CardTitle className="flex items-center justify-between gap-2">
+                  <span>{exam.name}</span>
+                  {submitted && (
+                    <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded">
+                      ✓ Enviada
+                    </span>
+                  )}
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
@@ -136,13 +157,16 @@ export function ExamSelector() {
                 <p className="text-sm text-muted-foreground">
                   <strong>Conteúdo:</strong> de {exam.minWords} a {exam.maxWords} palavras
                 </p>
+                {submitted && (
+                  <p className="text-xs text-primary mt-2">Clique para visualizar sua redação enviada.</p>
+                )}
               </CardContent>
             </Card>
           )
           })}
         </div>
 
-        {examState.selectedExamId && (
+        {examState.selectedExamId && selectedExam && !isAttemptSubmitted(selectedExam.attempt) && (
           <div className="flex justify-center">
             <Button size="lg" onClick={() => setShowStartConfirm(true)}>
               Iniciar Prova
