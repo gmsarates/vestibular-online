@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { appCandidateApi, setAppToken } from '@gmsarates/vestibular-api-client';
+import { appCandidateApi, setAppToken, setAppTokenExpires } from '@gmsarates/vestibular-api-client';
 import type { ValidateOtpRequest } from '@gmsarates/vestibular-api-client';
 
 interface RegisterFormProps {
@@ -100,9 +100,11 @@ export function RegisterForm({ onBack }: RegisterFormProps) {
         code: otp,
         university_id: import.meta.env.VITE_UNIVERSITY_ID,
       } as ValidateOtpRequest);
+      
       if (logged && logged.token) {
+        setAppTokenExpires(logged.expires)
         setAppToken(logged.token);
-        login(cpfDigits);
+        login(cpf.replace(/\D/g, ''));
       }
     } catch (error) {
       toast.error('Código de verificação inválido. Tente novamente.');
