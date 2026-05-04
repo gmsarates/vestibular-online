@@ -115,6 +115,7 @@ function toExamConfig(apiExam: Exam & { university?: { name?: string } }): ExamC
     minWords: apiExam.min_words,
     maxWords: apiExam.max_words,
     attempt: (apiExam.attempt as ExamAttempt | null | undefined) ?? null,
+    courses: apiExam.courses
   };
 }
 

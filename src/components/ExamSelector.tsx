@@ -114,6 +114,8 @@ export function ExamSelector() {
     setShowMultipleAttempts(true)
   }
 
+  console.log(exams)
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <div className="w-full max-w-2xl space-y-6">
@@ -148,6 +150,7 @@ export function ExamSelector() {
                     </span>
                   )}
                 </CardTitle>
+                <CardDescription>{exam.courses.map((c) => {return c.name}).join(', ')}</CardDescription>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">

@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { formatCPF, validateCPF } from '@/lib/cpf';
 import { useExam } from '@/context/ExamContext';
@@ -6,8 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { appCandidateApi, setAppToken, setAppTokenExpires } from '@gmsarates/vestibular-api-client';
-import type { ValidateOtpRequest } from '@gmsarates/vestibular-api-client';
+import { appCandidateApi, appUniversityApi, setAppToken, setAppTokenExpires, University } from '@gmsarates/vestibular-api-client';
+import type { Course, ValidateOtpRequest } from '@gmsarates/vestibular-api-client';
+import { CourseSelect } from './CourseSelect';
 
 interface RegisterFormProps {
   onBack: () => void;
@@ -30,6 +31,31 @@ export function RegisterForm({ onBack }: RegisterFormProps) {
   const [loading, setLoading] = useState(false);
   const [otpStep, setOtpStep] = useState(false);
   const [otp, setOtp] = useState('');
+  const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [university, setUniversity] = useState<University>();
+
+  const fetchData = useCallback(() => {
+    setLoading(true);
+    Promise.all([appUniversityApi.get(import.meta.env.VITE_UNIVERSITY_ID)])
+      .then((u) => { 
+        const university = u[0];
+        setUniversity(university);
+        setCourses(university.courses);
+       })
+      .catch(() => toast.error("Erro ao carregar dados"))
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // const toggleCourse = (id: string) => {
+  //   setSelectedCourses(prev =>
+  //     prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]
+  //   );
+  // };
 
   const handleSubmit = useCallback(async () => {
     const cpfDigits = cpf.replace(/\D/g, '');
@@ -61,6 +87,7 @@ export function RegisterForm({ onBack }: RegisterFormProps) {
         name: name.trim(),
         email: email.trim(),
         phone: phoneDigits,
+        courses: selectedCourses
       } as any);
 
       if (response) {
@@ -85,7 +112,7 @@ export function RegisterForm({ onBack }: RegisterFormProps) {
     } finally {
       setLoading(false);
     }
-  }, [cpf, name, email, phone]);
+  }, [cpf, name, email, phone, selectedCourses]);
 
   const handleVerifyOtp = useCallback(async () => {
     if (!otp) {
@@ -216,6 +243,15 @@ export function RegisterForm({ onBack }: RegisterFormProps) {
                   onChange={e => setPhone(formatPhone(e.target.value))}
                   maxLength={16}
                   autoComplete="tel"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="reg-phone">Cursos de interesse</Label>
+                <CourseSelect
+                  courses={courses}          // CourseOption[] buscado da API
+                  value={selectedCourses}
+                  onChange={setSelectedCourses}
                 />
               </div>
 

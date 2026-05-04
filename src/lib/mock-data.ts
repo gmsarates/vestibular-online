@@ -27,6 +27,7 @@ export interface ExamConfig {
   minWords: number;
   maxWords: number;
   attempt: ExamAttempt | null;
+  courses: any;
 }
 
 export interface ExamResult {
