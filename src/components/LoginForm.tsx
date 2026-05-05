@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { appCandidateApi, setAppToken, setAppTokenExpires, setRedirectUri } from '@gmsarates/vestibular-api-client';
 import { LoginRequest, ValidateOtpRequest } from '@gmsarates/vestibular-api-client';
 import { RegisterForm } from './RegisterForm';
+import { texts } from "../../configs"
 
 export function LoginForm() {
   const { login } = useExam();
@@ -82,8 +83,8 @@ export function LoginForm() {
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">Vestibular Online</CardTitle>
-          <CardDescription>Plataforma de Redação</CardDescription>
+          <CardTitle className="text-2xl font-bold">{texts.auth.title}</CardTitle>
+          <CardDescription>{texts.auth.description}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
@@ -100,7 +101,7 @@ export function LoginForm() {
 
           {!otpSent ? (
             <Button className="w-full" onClick={sendOtp}>
-              Enviar código de verificação
+              {texts.auth.send_otp}
             </Button>
           ) : (
             <>
@@ -134,7 +135,7 @@ export function LoginForm() {
             className="w-full"
             onClick={() => setShowRegister(true)}
           >
-            Criar cadastro
+            {texts.auth.register}
           </Button>
 
           {error && (

@@ -1,0 +1,30 @@
+export const texts = {
+  register: {
+    title: 'Criar cadastro',
+    description: 'Preencha seus dados para se cadastrar',
+    button: 'Cadastrar',
+    back: 'Voltar para login'
+  },
+  auth: {
+		title: "Vestibular Online",
+		description: "Redação",
+    send_otp: 'Enviar código de verificação',
+    register: 'Criar cadastro',
+  },
+  result: {
+		title: "Resultado da redação",
+		description: "teste",
+    approved: {
+      title: "Parabéns, você foi aprovado!",
+      description: "Em breve um de nossos consultores entrará em contato"
+    },
+		reproved: {
+			title: "Obrigado pela realização da prova!",
+			description: "Em breve, um de nossos consultores entrará em contato!"
+		}
+  }
+};
+
+export const config = {
+  min_score: 650
+}

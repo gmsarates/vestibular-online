@@ -5,6 +5,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { useCallback, useEffect, useState } from 'react';
 import { appExamApi } from '@gmsarates/vestibular-api-client';
 import toast from 'react-hot-toast';
+import { texts, config } from '../../configs';
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   REVIEW_PENDING: { label: 'Aguardando correção', color: 'text-muted-foreground' },
@@ -42,10 +43,12 @@ export function ResultView() {
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-lg">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Resultado da Redação</CardTitle>
-          {selectedExam && (
+          <CardTitle className="text-2xl">{texts.result.title}</CardTitle>
+          {/* {selectedExam && (
             <p className="text-sm text-muted-foreground">{selectedExam.name} — {selectedExam.theme}</p>
-          )}
+            )} */}
+          <p className="text-sm text-muted-foreground">{texts.result.description}</p>
+          
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Status */}
@@ -54,32 +57,30 @@ export function ResultView() {
             <p className={`text-xl font-bold ${statusInfo.color}`}>{statusInfo.label}</p>
           </div>
 
-          {/* Exam status */}
-          {attempt?.feedback !== null && attempt?.feedback !== undefined && (
-            <div className="rounded-lg bg-secondary p-4 text-center">
-              <p className="text-sm text-muted-foreground">Resultado</p>
-              <p className="text-foreground">{attempt.feedback}</p>
+          {/* result */}
+          {attempt?.score && (
+            <div className="rounded-lg border p-4 text-center">
+              <p className="text-sm font-medium text-foreground mb-1">{attempt.score >= config.min_score ? texts.result.approved.title : texts.result.reproved.title}</p>
+              <p className="text-sm text-muted-foreground">{attempt.score >= config.min_score ? texts.result.approved.description : texts.result.reproved.description}</p>
             </div>
           )}
 
           {/* Grade */}
-          {attempt?.score !== null && attempt?.score !== undefined && (
+          {attempt?.score !== null && attempt?.score !== undefined && attempt.score >= config.min_score && (
             <div className="text-center">
               <p className="text-sm text-muted-foreground">Nota</p>
               <p className="text-4xl font-bold text-foreground">{attempt.score}<span className="text-lg text-muted-foreground">/1000</span></p>
             </div>
           )}
 
-          {/* Feedback */}
-          {/* {result?.feedback && (
-            <div className="rounded-lg border p-4">
-              <p className="text-sm font-medium text-foreground mb-1">Feedback</p>
-              <p className="text-sm text-muted-foreground">{result.feedback}</p>
+          {/* feedback */}
+          {attempt?.feedback !== null && attempt?.feedback !== undefined && attempt.score >= config.min_score && (
+            <div className="rounded-lg bg-secondary p-4 text-center">
+              <p className="text-sm text-muted-foreground">Feedback</p>
+              <p className="text-foreground text-sm">{attempt.feedback}</p>
             </div>
-          )} */}
+          )}
 
-          {/* Simulate result button (for demo) */}
-          {/* NOTE: In production, results would be fetched from a secure backend */}
 
           <div className="flex gap-3 justify-center">
             <Button variant="outline" onClick={() => navigate({ to: '/' })}>

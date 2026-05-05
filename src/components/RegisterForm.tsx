@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { appCandidateApi, appUniversityApi, setAppToken, setAppTokenExpires, University } from '@gmsarates/vestibular-api-client';
 import type { Course, ValidateOtpRequest } from '@gmsarates/vestibular-api-client';
 import { CourseSelect } from './CourseSelect';
+import { texts } from '../../configs';
 
 interface RegisterFormProps {
   onBack: () => void;
@@ -158,12 +159,12 @@ export function RegisterForm({ onBack }: RegisterFormProps) {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold">
-            {otpStep ? 'Verificar Código' : 'Criar Cadastro'}
+            {otpStep ? 'Verificar Código' : texts.register.title}
           </CardTitle>
           <CardDescription>
             {otpStep
               ? `Enviamos um código para ${email}. Insira-o abaixo.`
-              : 'Preencha seus dados para se cadastrar'}
+              : texts.register.description}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -192,7 +193,7 @@ export function RegisterForm({ onBack }: RegisterFormProps) {
                 Reenviar código
               </button>
               <Button variant="ghost" className="w-full" onClick={onBack} disabled={loading}>
-                Voltar para login
+                {texts.register.back}
               </Button>
             </>
           ) : (
@@ -256,10 +257,10 @@ export function RegisterForm({ onBack }: RegisterFormProps) {
               </div>
 
               <Button className="w-full" onClick={handleSubmit} disabled={loading}>
-                {loading ? 'Cadastrando...' : 'Cadastrar'}
+                {loading ? 'Cadastrando...' : texts.register.button}
               </Button>
               <Button variant="ghost" className="w-full" onClick={onBack} disabled={loading}>
-                Voltar para login
+                {texts.register.back}
               </Button>
             </>
           )}
