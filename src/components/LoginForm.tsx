@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { appCandidateApi, setAppToken, setAppTokenExpires } from '@gmsarates/vestibular-api-client';
+import { appCandidateApi, setAppToken, setAppTokenExpires, setRedirectUri } from '@gmsarates/vestibular-api-client';
 import { LoginRequest, ValidateOtpRequest } from '@gmsarates/vestibular-api-client';
 import { RegisterForm } from './RegisterForm';
 
@@ -63,6 +63,7 @@ export function LoginForm() {
       } as ValidateOtpRequest);
 
       if (logged && logged.token) {
+        setRedirectUri('/login')
         setAppTokenExpires(logged.expires)
         setAppToken(logged.token);
         login(cpf.replace(/\D/g, ''));

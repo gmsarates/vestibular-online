@@ -2,10 +2,11 @@ import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/r
 import { ExamProvider } from "@/context/ExamContext";
 import { Toaster } from "react-hot-toast";
 
-import { setBaseUrl, setAppEnv } from "@gmsarates/vestibular-api-client";
+import { setBaseUrl, setAppEnv, setRedirectUri } from "@gmsarates/vestibular-api-client";
 
 setAppEnv('app')
 setBaseUrl(import.meta.env.VITE_API_BASE_URL || "http://localhost:3000")
+setRedirectUri(null);
 
 import appCss from "../styles.css?url";
 

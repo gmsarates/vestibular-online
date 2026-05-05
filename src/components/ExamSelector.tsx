@@ -11,7 +11,7 @@ import toast from 'react-hot-toast';
 import { ExamAttemptStatus, ExamConfig } from '@/lib/mock-data';
 
 export function ExamSelector() {
-  const { user, exams, selectExam, examState, currentExamState, setActiveExam, viewSubmittedExam, login, logout, startExam, resetExam } = useExam();
+  const { user, exams, selectExam, examState, currentExamState, setActiveExam, viewSubmittedExam, login, refreshExams, logout, startExam, resetExam } = useExam();
   const navigate = useNavigate();
   const [showStartConfirm, setShowStartConfirm] = useState(false);
   const [showMultipleAttempts, setShowMultipleAttempts] = useState(false);
@@ -32,6 +32,10 @@ export function ExamSelector() {
   const inProgressExamId = inProgressExam?.id ?? null;
   const inProgressAttemptId = inProgressExam?.attempt?.id ?? null;
   const inProgressStartedAt = inProgressExam?.attempt?.created_at_timestamp ?? null;
+
+  useEffect(() => {
+    refreshExams();
+  }, []);
 
   useEffect(() => {
     if (!inProgressExamId || !inProgressAttemptId) return;
@@ -113,8 +117,6 @@ export function ExamSelector() {
     calculateTimeLeft(exam?.attempt?.created_at_timestamp, exam.durationMinutes)
     setShowMultipleAttempts(true)
   }
-
-  console.log(exams)
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">

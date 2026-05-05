@@ -30,6 +30,7 @@ interface ExamContextType {
   selectedExam: ExamConfig | null;
   login: (cpf: string) => void;
   logout: () => void;
+  refreshExams: () => Promise<void>;
   selectExam: (id: string) => void;
   startExam: () => Promise<void>;
   setActiveExam: (exam: ExamState, attemptId: string) => void;
@@ -158,43 +159,37 @@ export function ExamProvider({ children }: { children: ReactNode }) {
     setHasHydratedStorage(true);
   }, []);
 
-  useEffect(() => {
-    if (!hasHydratedStorage) return;
+  // 1. Extrai a lógica numa função
+  const refreshExams = useCallback(async () => {
     if (!user) {
       setExams([]);
       return;
     }
+    try {
+      const list = await appExamApi.list();
+      const mapped = list
+        .filter(exam => exam.active)
+        .map(exam => toExamConfig(exam as Exam & { university?: { name?: string } }));
 
-    let cancelled = false;
+      setExams(mapped);
 
-    (async () => {
-      try {
-        const list = await appExamApi.list();
-        if (cancelled) return;
+      setExamState(s => {
+        if (!s.selectedExamId) return s;
+        const stillExists = mapped.some(e => e.id === s.selectedExamId);
+        if (stillExists) return s;
+        return { ...s, selectedExamId: null, status: 'idle', startTimestamp: null };
+      });
+    } catch (error) {
+      if (handleExpiredSession(error)) return;
+      console.error('[ExamContext] Falha ao carregar exames:', error);
+      setExams([]);
+    }
+  }, [user, handleExpiredSession]);
 
-        const mapped = list
-          .filter(exam => exam.active)
-          .map(exam => toExamConfig(exam as Exam & { university?: { name?: string } }));
-
-        setExams(mapped);
-
-        setExamState(s => {
-          if (!s.selectedExamId) return s;
-          const stillExists = mapped.some(e => e.id === s.selectedExamId);
-          if (stillExists) return s;
-          return { ...s, selectedExamId: null, status: 'idle', startTimestamp: null };
-        });
-      } catch (error) {
-        if (cancelled) return;
-        if (handleExpiredSession(error)) return;
-        console.error('[ExamContext] Falha ao carregar exames:', error);
-        setExams([]);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
+  // 2. O useEffect agora só chama a função
+  useEffect(() => {
+    if (!hasHydratedStorage) return;
+    refreshExams();
   }, [hasHydratedStorage, user]);
 
   useEffect(() => {
@@ -380,7 +375,7 @@ export function ExamProvider({ children }: { children: ReactNode }) {
 
   return (
     <ExamContext.Provider value={{
-      user, examState, currentExamState, selectedExam, login, logout, selectExam, startExam, setActiveExam,
+      user, examState, currentExamState, selectedExam, login, logout, refreshExams, selectExam, startExam, setActiveExam,
       viewSubmittedExam,
       updateEssay, syncEssay, submitEssay, expireEssay, incrementTabSwitch, setResult, resetExam,
       exams,
