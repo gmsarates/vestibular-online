@@ -28,6 +28,8 @@ interface ExamContextType {
   examState: ExamState;
   currentExamState: ExamState | null;
   selectedExam: ExamConfig | null;
+  redirectExam: string|null;
+  setRedirectExam: (exam_id: string|null) => void;
   login: (cpf: string) => void;
   logout: () => void;
   refreshExams: () => Promise<void>;
@@ -126,7 +128,9 @@ export function ExamProvider({ children }: { children: ReactNode }) {
   const [currentExamState, setCurrentExamState] = useState<ExamState|null>(null);
   const [hasHydratedStorage, setHasHydratedStorage] = useState(false);
   const [exams, setExams] = useState<ExamConfig[]>([]);
+  const [redirectExam, setRedirectExam] = useState<string | null>(null);
   const examStateRef = useRef(examState);
+
 
   const selectedExam = exams.find(e => e.id === examState.selectedExamId) ?? null;
 
@@ -165,6 +169,7 @@ export function ExamProvider({ children }: { children: ReactNode }) {
       setExams([]);
       return;
     }
+    
     try {
       const list = await appExamApi.list();
       const mapped = list
@@ -376,7 +381,7 @@ export function ExamProvider({ children }: { children: ReactNode }) {
   return (
     <ExamContext.Provider value={{
       user, examState, currentExamState, selectedExam, login, logout, refreshExams, selectExam, startExam, setActiveExam,
-      viewSubmittedExam,
+      viewSubmittedExam, redirectExam, setRedirectExam,
       updateEssay, syncEssay, submitEssay, expireEssay, incrementTabSwitch, setResult, resetExam,
       exams,
     }}>

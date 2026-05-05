@@ -10,12 +10,18 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ResultRouteImport } from './routes/result'
+import { Route as RedirectRouteImport } from './routes/redirect'
 import { Route as ExamRouteImport } from './routes/exam'
 import { Route as IndexRouteImport } from './routes/index'
 
 const ResultRoute = ResultRouteImport.update({
   id: '/result',
   path: '/result',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RedirectRoute = RedirectRouteImport.update({
+  id: '/redirect',
+  path: '/redirect',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ExamRoute = ExamRouteImport.update({
@@ -32,30 +38,34 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/exam': typeof ExamRoute
+  '/redirect': typeof RedirectRoute
   '/result': typeof ResultRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/exam': typeof ExamRoute
+  '/redirect': typeof RedirectRoute
   '/result': typeof ResultRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/exam': typeof ExamRoute
+  '/redirect': typeof RedirectRoute
   '/result': typeof ResultRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/exam' | '/result'
+  fullPaths: '/' | '/exam' | '/redirect' | '/result'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/exam' | '/result'
-  id: '__root__' | '/' | '/exam' | '/result'
+  to: '/' | '/exam' | '/redirect' | '/result'
+  id: '__root__' | '/' | '/exam' | '/redirect' | '/result'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ExamRoute: typeof ExamRoute
+  RedirectRoute: typeof RedirectRoute
   ResultRoute: typeof ResultRoute
 }
 
@@ -66,6 +76,13 @@ declare module '@tanstack/react-router' {
       path: '/result'
       fullPath: '/result'
       preLoaderRoute: typeof ResultRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/redirect': {
+      id: '/redirect'
+      path: '/redirect'
+      fullPath: '/redirect'
+      preLoaderRoute: typeof RedirectRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/exam': {
@@ -88,6 +105,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ExamRoute: ExamRoute,
+  RedirectRoute: RedirectRoute,
   ResultRoute: ResultRoute,
 }
 export const routeTree = rootRouteImport

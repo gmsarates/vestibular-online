@@ -59,9 +59,9 @@ export function EssayEditor() {
     return () => window.removeEventListener('beforeunload', handler);
   }, [examState.status]);
 
-  const handlePaste = useCallback((e: React.ClipboardEvent) => {
-    e.preventDefault();
-  }, []);
+  // const handlePaste = useCallback((e: React.ClipboardEvent) => {
+  //   e.preventDefault();
+  // }, []);
 
   const handleTextChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     if (updateTimeoutRef.current !== null) {
@@ -122,8 +122,8 @@ export function EssayEditor() {
 
   return (
     <div className="min-h-screen bg-background"
-      onCopy={e => e.preventDefault()}
-      onCut={e => e.preventDefault()}
+      // onCopy={e => e.preventDefault()}
+      // onCut={e => e.preventDefault()}
     >
       {/* Tab warning overlay */}
       {showTabWarning && (
@@ -211,7 +211,7 @@ export function EssayEditor() {
             placeholder="Comece a escrever sua redação aqui..."
             value={examState.essay}
             onChange={handleTextChange}
-            onPaste={handlePaste}
+            // onPaste={handlePaste}
             disabled={!isEditable}
             spellCheck
             style={{ userSelect: isEditable ? 'auto' : 'none' }}

@@ -11,9 +11,11 @@ import toast from 'react-hot-toast';
 import { ExamAttemptStatus, ExamConfig } from '@/lib/mock-data';
 
 export function ExamSelector() {
-  const { user, exams, selectExam, examState, currentExamState, setActiveExam, viewSubmittedExam, login, refreshExams, logout, startExam, resetExam } = useExam();
+  const { user, exams, selectExam, examState, currentExamState, setActiveExam, viewSubmittedExam, login, refreshExams, logout, startExam, resetExam, redirectExam, setRedirectExam } = useExam();
   const navigate = useNavigate();
   const [showStartConfirm, setShowStartConfirm] = useState(false);
+  const [startingRedirect, setStartingRedirect] = useState(false);
+  const [readyToRedirect, setReadyToRedirect] = useState(false);
   const [showMultipleAttempts, setShowMultipleAttempts] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -32,6 +34,36 @@ export function ExamSelector() {
   const inProgressExamId = inProgressExam?.id ?? null;
   const inProgressAttemptId = inProgressExam?.attempt?.id ?? null;
   const inProgressStartedAt = inProgressExam?.attempt?.created_at_timestamp ?? null;
+
+  const handleStart = async () => {
+    if (!selectedExam) {
+      toast.error('Selecione um vestibular para iniciar.');
+      return;
+    }
+    if (startRequestedRef.current) return;
+    startRequestedRef.current = true;
+
+    try {
+      await startExam();
+      setShowStartConfirm(false);
+      navigate({ to: '/exam' });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Falha ao iniciar a tentativa.';
+      const startedExam = currentStartedExam ?? inProgressExam;
+      const startedAttempt = startedExam?.attempt ?? null;
+      if (message === 'Multiple attempts' && startedAttempt) {
+        calculateTimeLeft(
+          currentExamState?.startTimestamp ?? startedAttempt.created_at_timestamp,
+          startedExam?.durationMinutes,
+        );
+        setShowMultipleAttempts(true)
+      } else {
+        toast.error(message);
+      }
+      //resetExam();
+      startRequestedRef.current = false;
+    }
+  };
 
   useEffect(() => {
     refreshExams();
@@ -52,6 +84,27 @@ export function ExamSelector() {
     }, inProgressAttemptId);
   }, [currentExamState?.attemptId, inProgressAttemptId, inProgressExamId, inProgressStartedAt, setActiveExam]);
 
+  useEffect(() => {
+    if (exams && exams.length > 0) {
+      const ex = exams.filter((e) => {
+        return e.id === redirectExam
+      })
+
+      console.log(redirectExam, exams, ex)
+
+
+      if (redirectExam !== null && ex.length > 0) {
+        selectExam(redirectExam)
+        setTimeout(() => {
+          setRedirectExam(null)
+          handleStart()
+        }, 2000)
+
+        return;
+      }
+    }
+  }, [exams, redirectExam, selectExam, setRedirectExam, handleStart])
+
   function calculateTimeLeft(
     startedDate: number | string | null | undefined,
     durationMinutes: number | null | undefined,
@@ -71,37 +124,6 @@ export function ExamSelector() {
     const elapsedMinutes = Math.floor((Date.now() - startedAtMs) / (1000 * 60));
     setTimeLeft(Math.max(0, (durationMinutes ?? 0) - elapsedMinutes));
   }
-
-  const handleStart = async () => {
-    if (!selectedExam) {
-      toast.error('Selecione um vestibular para iniciar.');
-      return;
-    }
-    if (startRequestedRef.current) return;
-    startRequestedRef.current = true;
-
-    try {
-      await startExam();
-      setShowStartConfirm(false);
-      navigate({ to: '/exam' });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Falha ao iniciar a tentativa.';
-      const startedExam = currentStartedExam ?? inProgressExam;
-      const startedAttempt = startedExam?.attempt ?? null;
-      if (message === 'Multiple attempts' && startedAttempt) {
-        // aqui se eu clicar logo depois do login, nao ta pegando a prova que ta em andamento
-        calculateTimeLeft(
-          currentExamState?.startTimestamp ?? startedAttempt.created_at_timestamp,
-          startedExam?.durationMinutes,
-        );
-        setShowMultipleAttempts(true)
-      } else {
-        toast.error(message);
-      }
-      //resetExam();
-      startRequestedRef.current = false;
-    }
-  };
 
   const handleSubmittedClick = (exam: ExamConfig) => {
     if (viewSubmittedExam(exam.id)) {
