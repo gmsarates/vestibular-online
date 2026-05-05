@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { appCandidateApi, setAppToken, setAppTokenExpires, setRedirectUri } from '@gmsarates/vestibular-api-client';
 import { LoginRequest, ValidateOtpRequest } from '@gmsarates/vestibular-api-client';
 import { RegisterForm } from './RegisterForm';
-import { texts } from "../../configs"
+import { config, texts } from "../../configs"
 
 export function LoginForm() {
   const { login } = useExam();
@@ -19,6 +19,8 @@ export function LoginForm() {
   const [otpSent, setOtpSent] = useState(false);
   const [error, setError] = useState('');
   const [showRegister, setShowRegister] = useState(false);
+    const [loading, setLoading] = useState(false);
+
 
   const handleCpfChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setCpf(formatCPF(e.target.value));
@@ -31,6 +33,8 @@ export function LoginForm() {
       return;
     }
 
+    setLoading(true)
+
     try {
       await appCandidateApi.login({ 
         document: cpf,
@@ -40,6 +44,7 @@ export function LoginForm() {
       toast.success('Código de verificação enviado para o seu email.');
       setOtpSent(true);
       setError('');  
+      setLoading(false)
     } catch (error: any) {
       if (error instanceof Error) {
         toast.error(error.message)
@@ -48,7 +53,7 @@ export function LoginForm() {
       }
     }
 
-  }, [cpf]);
+  }, [cpf, setLoading]);
 
   const handleLogin = useCallback(async () => {
     if (!otp) {
@@ -56,12 +61,16 @@ export function LoginForm() {
       return;
     }
 
+    setLoading(true)
+
     try {
       let logged = await appCandidateApi.validateOtp({ 
         document: cpf,
         code: otp,
         university_id: import.meta.env.VITE_UNIVERSITY_ID,
       } as ValidateOtpRequest);
+
+      setLoading(false)
 
       if (logged && logged.token) {
         setRedirectUri('/login')
@@ -80,7 +89,11 @@ export function LoginForm() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+    <div className="flex min-h-screen items-center justify-center bg-background p-4" style={{ 
+      backgroundImage: `url(/bg/${config.auth_bg})`,
+      backgroundPosition: 'center',
+      backgroundSize: 'cover'
+    }}>
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold">{texts.auth.title}</CardTitle>
@@ -100,8 +113,8 @@ export function LoginForm() {
           </div>
 
           {!otpSent ? (
-            <Button className="w-full" onClick={sendOtp}>
-              {texts.auth.send_otp}
+            <Button className="w-full" onClick={sendOtp} disabled={loading}>
+              {loading ? 'Processando...' : texts.auth.send_otp}
             </Button>
           ) : (
             <>

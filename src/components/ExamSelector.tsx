@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import toast from 'react-hot-toast';
 import { ExamAttemptStatus, ExamConfig } from '@/lib/mock-data';
+import { config } from '../../configs';
 
 export function ExamSelector() {
   const { user, exams, selectExam, examState, currentExamState, setActiveExam, viewSubmittedExam, login, refreshExams, logout, startExam, resetExam, redirectExam, setRedirectExam } = useExam();
@@ -141,7 +142,11 @@ export function ExamSelector() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+    <div className="flex min-h-screen items-center justify-center bg-background p-4" style={{ 
+      backgroundImage: `url(/bg/${config.dash_bg})`,
+      backgroundPosition: 'center',
+      backgroundSize: 'cover'
+    }}>
       <div className="w-full max-w-2xl space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-foreground">Olá, {user?.name ?? 'bem vindo!'}</h1>

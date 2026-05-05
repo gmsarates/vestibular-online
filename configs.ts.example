@@ -26,5 +26,7 @@ export const texts = {
 };
 
 export const config = {
-  min_score: 650
+  min_score: 650,
+  auth_bg: 'ies1.jpg',
+  dash_bg: 'ies1-dash.avif'
 }

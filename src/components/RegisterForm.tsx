@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { appCandidateApi, appUniversityApi, setAppToken, setAppTokenExpires, University } from '@gmsarates/vestibular-api-client';
 import type { Course, ValidateOtpRequest } from '@gmsarates/vestibular-api-client';
 import { CourseSelect } from './CourseSelect';
-import { texts } from '../../configs';
+import { config, texts } from '../../configs';
 
 interface RegisterFormProps {
   onBack: () => void;
@@ -155,7 +155,11 @@ export function RegisterForm({ onBack }: RegisterFormProps) {
   }, [cpf]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+    <div className="flex min-h-screen items-center justify-center bg-background p-4" style={{ 
+      backgroundImage: `url(/bg/${config.auth_bg})`,
+      backgroundPosition: 'center',
+      backgroundSize: 'cover'
+    }}>
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold">

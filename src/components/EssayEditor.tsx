@@ -115,6 +115,8 @@ export function EssayEditor() {
     );
   }
 
+  console.log(examState)
+
   const words = examState.essay.trim() ? examState.essay.trim().split(/\s+/).length : 0;
   const chars = examState.essay.length;  
   const isEditable = examState.status === 'in_progress';
