@@ -234,8 +234,9 @@ export function ExamProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const selectExam = useCallback((id: string) => {
-    setExamState(s => ({ ...s, selectedExamId: id }));
+  const selectExam = useCallback(async (id: string) => {
+    await setExamState(s => ({ ...s, selectedExamId: id }));
+    console.log(examState)
   }, []);
 
   const startExam = useCallback(async () => {

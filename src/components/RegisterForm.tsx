@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label';
 import { appCandidateApi, appUniversityApi, setAppToken, setAppTokenExpires, University } from '@gmsarates/vestibular-api-client';
 import type { Course, ValidateOtpRequest } from '@gmsarates/vestibular-api-client';
+import { MultipleCoursesSelect } from './MultipleCoursesSelect';
 import { CourseSelect } from './CourseSelect';
 import { config, texts } from '../../configs';
 
@@ -43,7 +44,7 @@ export function RegisterForm({ onBack }: RegisterFormProps) {
         const university = u[0];
         setUniversity(university);
         setCourses(university.courses);
-       })
+      })
       .catch(() => toast.error("Erro ao carregar dados"))
       .finally(() => setLoading(false));
   }, []);
@@ -88,7 +89,7 @@ export function RegisterForm({ onBack }: RegisterFormProps) {
         name: name.trim(),
         email: email.trim(),
         phone: phoneDigits,
-        courses: selectedCourses
+        courses: [selectedCourses]
       } as any);
 
       if (response) {
@@ -252,7 +253,7 @@ export function RegisterForm({ onBack }: RegisterFormProps) {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="reg-phone">Cursos de interesse</Label>
+                <Label htmlFor="reg-phone">Curso de interesse</Label>
                 <CourseSelect
                   courses={courses}          // CourseOption[] buscado da API
                   value={selectedCourses}

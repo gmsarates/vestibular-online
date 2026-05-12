@@ -10,6 +10,7 @@ import { appCandidateApi, setAppToken, setAppTokenExpires, setRedirectUri } from
 import { LoginRequest, ValidateOtpRequest } from '@gmsarates/vestibular-api-client';
 import { RegisterForm } from './RegisterForm';
 import { config, texts } from "../../configs"
+import { useIsMobile } from '@/lib/utils';
 
 export function LoginForm() {
   const { login } = useExam();
@@ -19,7 +20,8 @@ export function LoginForm() {
   const [otpSent, setOtpSent] = useState(false);
   const [error, setError] = useState('');
   const [showRegister, setShowRegister] = useState(false);
-    const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const isMobile = useIsMobile();
 
 
   const handleCpfChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -54,6 +56,7 @@ export function LoginForm() {
     }
 
   }, [cpf, setLoading]);
+  
 
   const handleLogin = useCallback(async () => {
     if (!otp) {
@@ -90,8 +93,8 @@ export function LoginForm() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4" style={{ 
-      backgroundImage: `url(/bg/${config.auth_bg})`,
-      backgroundPosition: 'center',
+      backgroundImage: `url(/bg/${isMobile ? config.mobile.auth_bg : config.auth_bg})`,
+      backgroundPosition: 'top center',
       backgroundSize: 'cover'
     }}>
       <Card className="w-full max-w-md">

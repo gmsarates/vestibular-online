@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import * as Popover from "@radix-ui/react-popover";
+import * as Checkbox from "@radix-ui/react-checkbox";
 import { Check, ChevronsUpDown, X, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -8,21 +9,21 @@ export interface CourseOption {
   name: string;
 }
 
-interface CourseSelectProps {
+interface MultipleCoursesSelectProps {
   courses: CourseOption[];
-  value: string | null;
-  onChange: (value: string | null) => void;
+  value: string[];
+  onChange: (value: string[]) => void;
   placeholder?: string;
   disabled?: boolean;
 }
 
-export function CourseSelect({
+export function MultipleCoursesSelect({
   courses,
   value,
   onChange,
-  placeholder = "Selecione o curso...",
+  placeholder = "Selecione os cursos...",
   disabled = false,
-}: CourseSelectProps) {
+}: MultipleCoursesSelectProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
 
@@ -34,27 +35,21 @@ export function CourseSelect({
     [courses, search]
   );
 
-  const select = (id: string) => {
-    onChange(id);
-    setOpen(false);
-    setSearch("");
+  const toggle = (id: string) => {
+    onChange(
+      value.includes(id) ? value.filter((v) => v !== id) : [...value, id]
+    );
   };
 
-  const clear = (e: React.MouseEvent) => {
+  const remove = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    onChange(null);
+    onChange(value.filter((v) => v !== id));
   };
 
-  const selectedCourse = courses.find((c) => c.id === value) ?? null;
+  const selectedCourses = courses.filter((c) => value.includes(c.id));
 
   return (
-    <Popover.Root
-      open={open}
-      onOpenChange={(next) => {
-        setOpen(next);
-        if (!next) setSearch("");
-      }}
-    >
+    <Popover.Root open={open} onOpenChange={setOpen}>
       <Popover.Trigger asChild disabled={disabled}>
         <button
           type="button"
@@ -65,28 +60,33 @@ export function CourseSelect({
             open && "border-ring"
           )}
         >
-          <span className={cn("flex-1 truncate text-left", !selectedCourse && "text-muted-foreground")}>
-            {selectedCourse ? selectedCourse.name : placeholder}
-          </span>
-
-          <div className="flex items-center gap-1 shrink-0">
-            {selectedCourse && (
-              <span
-                onClick={clear}
-                className="rounded-full p-0.5 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors cursor-pointer"
-                role="button"
-                aria-label="Limpar seleção"
-              >
-                <X className="h-3.5 w-3.5" />
-              </span>
+          <div className="flex flex-wrap gap-1.5 flex-1 min-w-0">
+            {selectedCourses.length === 0 ? (
+              <span className="text-muted-foreground">{placeholder}</span>
+            ) : (
+              selectedCourses.map((course) => (
+                <span
+                  key={course.id}
+                  className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary"
+                >
+                  {course.name}
+                  <span
+                    onClick={(e) => remove(course.id, e)}
+                    className="rounded-full p-0.5 hover:bg-primary/20 transition-colors cursor-pointer"
+                    role="button"
+                  >
+                    <X className="h-3 w-3" />
+                  </span>
+                </span>
+              ))
             )}
-            <ChevronsUpDown
-              className={cn(
-                "h-4 w-4 text-muted-foreground transition-transform duration-150",
-                open && "rotate-180"
-              )}
-            />
           </div>
+          <ChevronsUpDown
+            className={cn(
+              "h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-150",
+              open && "rotate-180"
+            )}
+          />
         </button>
       </Popover.Trigger>
 
@@ -97,7 +97,6 @@ export function CourseSelect({
           align="start"
           onOpenAutoFocus={(e) => e.preventDefault()}
         >
-          {/* Search */}
           <div className="flex items-center gap-2 border-b border-input px-3 py-2">
             <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
             <input
@@ -117,7 +116,6 @@ export function CourseSelect({
             )}
           </div>
 
-          {/* Options */}
           <div className="max-h-52 overflow-y-auto p-1">
             {filtered.length === 0 ? (
               <p className="py-6 text-center text-sm text-muted-foreground">
@@ -125,31 +123,54 @@ export function CourseSelect({
               </p>
             ) : (
               filtered.map((course) => {
-                const selected = value === course.id;
+                const checked = value.includes(course.id);
                 return (
                   <div
                     key={course.id}
-                    onClick={() => select(course.id)}
+                    onClick={() => toggle(course.id)}
                     className={cn(
                       "flex cursor-pointer items-center gap-3 rounded-sm px-3 py-2 text-sm transition-colors",
                       "hover:bg-accent hover:text-accent-foreground",
-                      selected && "bg-accent/50"
+                      checked && "bg-accent/50"
                     )}
                   >
-                    {/* Check icon no lugar do checkbox */}
-                    <Check
+                    <Checkbox.Root
+                      checked={checked}
+                      onCheckedChange={() => toggle(course.id)}
+                      onClick={(e) => e.stopPropagation()}
                       className={cn(
-                        "h-4 w-4 shrink-0 text-primary transition-opacity",
-                        selected ? "opacity-100" : "opacity-0"
+                        "h-4 w-4 shrink-0 rounded border border-input transition-colors",
+                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                        checked
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "bg-background"
                       )}
-                      strokeWidth={3}
-                    />
+                    >
+                      <Checkbox.Indicator className="flex items-center justify-center">
+                        <Check className="h-3 w-3" strokeWidth={3} />
+                      </Checkbox.Indicator>
+                    </Checkbox.Root>
                     <span className="flex-1">{course.name}</span>
                   </div>
                 );
               })
             )}
           </div>
+
+          {value.length > 0 && (
+            <div className="border-t border-input px-3 py-2 flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">
+                {value.length} selecionado{value.length !== 1 ? "s" : ""}
+              </span>
+              <button
+                type="button"
+                onClick={() => onChange([])}
+                className="text-xs text-muted-foreground hover:text-foreground underline-offset-2 hover:underline transition-colors"
+              >
+                Limpar
+              </button>
+            </div>
+          )}
         </Popover.Content>
       </Popover.Portal>
     </Popover.Root>

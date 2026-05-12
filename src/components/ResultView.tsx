@@ -19,11 +19,20 @@ export function ResultView() {
   const [attempt, setAttempt] = useState<any>();
   const navigate = useNavigate();
 
+  
   const fetchData = useCallback(() => {
-    Promise.all([appExamApi.info(examState.attemptId ?? '')])
+    console.log(examState)
+    console.log('attemptId', examState.attemptId)
+
+    if (examState.attemptId === null) {
+      throw new Error('Não foi possível carregar o resultado, tente novamente.')
+    }
+    
+
+    Promise.all([appExamApi.info(examState.attemptId)])
       .then((a) => { 
-        setAttempt(a[0])
         console.log(a[0])
+        setAttempt(a[0])
       })
       .catch(() => toast.error("Erro ao carregar dados"))
       .finally(() => {
@@ -58,7 +67,7 @@ export function ResultView() {
           </div>
 
           {/* result */}
-          {attempt?.score && (
+          {attempt?.score != null && (
             <div className="rounded-lg border p-4 text-center">
               <p className="text-sm font-medium text-foreground mb-1">{attempt.score >= config.min_score ? texts.result.approved.title : texts.result.reproved.title}</p>
               <p className="text-sm text-muted-foreground">{attempt.score >= config.min_score ? texts.result.approved.description : texts.result.reproved.description}</p>
@@ -66,7 +75,7 @@ export function ResultView() {
           )}
 
           {/* Grade */}
-          {attempt?.score !== null && attempt?.score !== undefined && attempt.score >= config.min_score && (
+          {attempt?.score != null && attempt?.score != undefined && (attempt?.score ?? 0) >= config.min_score && (
             <div className="text-center">
               <p className="text-sm text-muted-foreground">Nota</p>
               <p className="text-4xl font-bold text-foreground">{attempt.score}<span className="text-lg text-muted-foreground">/1000</span></p>
@@ -74,7 +83,7 @@ export function ResultView() {
           )}
 
           {/* feedback */}
-          {attempt?.feedback !== null && attempt?.feedback !== undefined && attempt.score >= config.min_score && (
+          {attempt?.feedback != null && attempt?.feedback != undefined && (attempt?.score ?? 0) >= config.min_score && (
             <div className="rounded-lg bg-secondary p-4 text-center">
               <p className="text-sm text-muted-foreground">Feedback</p>
               <p className="text-foreground text-sm">{attempt.feedback}</p>

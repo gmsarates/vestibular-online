@@ -27,6 +27,10 @@ export const texts = {
 
 export const config = {
   min_score: 650,
-  auth_bg: 'ies1.jpg',
-  dash_bg: 'ies1-dash.avif'
+  auth_bg: 'bg1.png',
+  dash_bg: 'ies1-dash.avif',
+  mobile: {
+    auth_bg: 'mobile_bg1.jpeg',
+    dash_bg: 'ies1-dash.avif',
+  }
 }

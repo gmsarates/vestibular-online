@@ -10,6 +10,7 @@ import {
 import toast from 'react-hot-toast';
 import { ExamAttemptStatus, ExamConfig } from '@/lib/mock-data';
 import { config } from '../../configs';
+import { useIsMobile } from '@/lib/utils';
 
 export function ExamSelector() {
   const { user, exams, selectExam, examState, currentExamState, setActiveExam, viewSubmittedExam, login, refreshExams, logout, startExam, resetExam, redirectExam, setRedirectExam } = useExam();
@@ -21,6 +22,8 @@ export function ExamSelector() {
   const [timeLeft, setTimeLeft] = useState(0);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const startRequestedRef = useRef(false);
+  const isMobile = useIsMobile();
+
 
   const isAttemptSubmitted = (attempt: ExamConfig['attempt']) => {
     if (!attempt) return false;
@@ -143,7 +146,7 @@ export function ExamSelector() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4" style={{ 
-      backgroundImage: `url(/bg/${config.dash_bg})`,
+      backgroundImage: `url(/bg/${isMobile ? config.mobile.dash_bg : config.dash_bg})`,
       backgroundPosition: 'center',
       backgroundSize: 'cover'
     }}>
