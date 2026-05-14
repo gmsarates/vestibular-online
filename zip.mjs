@@ -24,8 +24,7 @@ const excludePatterns = [
   '.env',
   '.git/**',
   '.gitignore',
-  'package-lock.json',
-  'zip.mjs'
+  'package-lock.json'
 ];
 
 // Criar o diretório build se não existir
