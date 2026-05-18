@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { appExamApi } from '@gmsarates/vestibular-api-client';
 import toast from 'react-hot-toast';
 import { texts, config } from '../../configs';
+import { sanitizeExamInstructionHtml } from '@/lib/html';
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   REVIEW_PENDING: { label: 'Aguardando correção', color: 'text-muted-foreground' },
@@ -86,7 +87,10 @@ export function ResultView() {
           {attempt?.feedback != null && attempt?.feedback != undefined && (attempt?.score ?? 0) >= config.min_score && (
             <div className="rounded-lg bg-secondary p-4 text-center">
               <p className="text-sm text-muted-foreground">Feedback</p>
-              <p className="text-foreground text-sm">{attempt.feedback}</p>
+              <div
+                className="text-foreground text-sm text-left [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:my-1 [&_p]:my-2"
+                dangerouslySetInnerHTML={{ __html: sanitizeExamInstructionHtml(String(attempt.feedback)) }}
+              />
             </div>
           )}
 
